@@ -1,0 +1,22 @@
+package imusic.backend.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.util.List;
+
+@EqualsAndHashCode(callSuper=false)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class BaseRequestDto {
+    @NotNull
+    private Integer page;
+    @NotNull
+    private Integer size;
+    private String sortBy;
+    private String sortDirection;
+    private List<String> filters;
+}
+
