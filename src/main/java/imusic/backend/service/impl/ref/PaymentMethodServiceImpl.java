@@ -72,7 +72,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
     @Override
     @Cacheable(cacheNames = "paymentMethods", key = "'paymentMethods-' + #request.page + '-' + #request.size + '-' + #request.sortBy + '-' + #request.sortDirection + '-' + #request.code + '-' + #request.name")
-    public List<PaymentMethodResponseDto> getStatusesWithFilters(PaymentMethodRequestDto request) {
+    public List<PaymentMethodResponseDto> getMethodsWithFilters(PaymentMethodRequestDto request) {
         List<PaymentMethod> methods = repository.findAll();
 
         methods = methods.stream()

@@ -13,6 +13,5 @@ public interface PaymentMethodService {
     PaymentMethodResponseDto create(PaymentMethodCreateDto dto);
     PaymentMethodResponseDto update(Long id, PaymentMethodUpdateDto dto);
     void delete(Long id);
-
-    List<PaymentMethodResponseDto> getStatusesWithFilters(PaymentMethodRequestDto request);
+    List<PaymentMethodResponseDto> getMethodsWithFilters(PaymentMethodRequestDto request);
 }
