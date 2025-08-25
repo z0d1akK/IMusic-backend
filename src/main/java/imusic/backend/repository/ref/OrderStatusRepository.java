@@ -5,6 +5,4 @@ import org.springframework.stereotype.Repository;
 import imusic.backend.entity.ref.OrderStatus;
 
 @Repository
-public interface OrderStatusRepository extends JpaRepository<OrderStatus, Long> {
-}
-
+public interface OrderStatusRepository extends JpaRepository<OrderStatus, Long>{}

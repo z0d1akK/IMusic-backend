@@ -1,6 +1,5 @@
-package imusic.backend.dto.request;
+package imusic.backend.dto.request.ref;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.List;
@@ -10,13 +9,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseRequestDto {
-    @NotNull
+public class InventoryMovementTypeRequestDto {
+    private String code;
+    private String name;
     private Integer page;
-    @NotNull
     private Integer size;
     private String sortBy;
     private String sortDirection;
     private List<String> filters;
 }
-

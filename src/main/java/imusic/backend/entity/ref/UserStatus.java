@@ -16,7 +16,7 @@ public class UserStatus {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // ACTIVE, BLOCKED, PENDING, DELETED
+    private String code; // ACTIVE, BLOCKED, DELETED
 
     @Column(nullable = false)
     private String name;

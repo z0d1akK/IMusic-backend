@@ -16,7 +16,7 @@ public class Role {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // ADMIN, MANAGER, CLIENT, GUEST
+    private String code; // ADMIN, MANAGER, CLIENT
 
     @Column(nullable = false)
     private String name;

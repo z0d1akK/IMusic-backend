@@ -1,5 +1,20 @@
 package imusic.backend.dto.request.ref;
 
-import imusic.backend.dto.request.RefRequestDto;
+import lombok.*;
 
-public class NotificationTypeRequestDto extends RefRequestDto{}
+import java.util.List;
+
+@EqualsAndHashCode(callSuper=false)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class NotificationTypeRequestDto{
+    private String code;
+    private String name;
+    private Integer page;
+    private Integer size;
+    private String sortBy;
+    private String sortDirection;
+    private List<String> filters;
+}

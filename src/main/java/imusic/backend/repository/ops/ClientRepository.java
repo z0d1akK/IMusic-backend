@@ -7,8 +7,7 @@ import imusic.backend.entity.ops.Client;
 import java.util.Optional;
 
 @Repository
-public interface ClientRepository extends JpaRepository<Client, Long> {
+public interface ClientRepository extends JpaRepository<Client, Long>{
     Optional<Client> findByUserId(Long userId);
     Client getClientsByUserId(Long id);
 }
-

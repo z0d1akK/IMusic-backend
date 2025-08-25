@@ -5,4 +5,4 @@ import org.springframework.stereotype.Repository;
 import imusic.backend.entity.ops.InventoryMovement;
 
 @Repository
-public interface InventoryMovementRepository extends JpaRepository<InventoryMovement, Long> {}
+public interface InventoryMovementRepository extends JpaRepository<InventoryMovement, Long>{}

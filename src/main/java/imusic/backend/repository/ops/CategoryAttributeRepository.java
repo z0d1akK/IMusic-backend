@@ -7,6 +7,6 @@ import imusic.backend.entity.ops.CategoryAttribute;
 import java.util.List;
 
 @Repository
-public interface CategoryAttributeRepository extends JpaRepository<CategoryAttribute, Long> {
+public interface CategoryAttributeRepository extends JpaRepository<CategoryAttribute, Long>{
     List<CategoryAttribute> findByCategoryId(Long categoryId);
 }

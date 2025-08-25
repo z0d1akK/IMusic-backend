@@ -7,6 +7,6 @@ import imusic.backend.entity.ops.ProductAttribute;
 import java.util.List;
 
 @Repository
-public interface ProductAttributeRepository extends JpaRepository<ProductAttribute, Long> {
+public interface ProductAttributeRepository extends JpaRepository<ProductAttribute, Long>{
     List<ProductAttribute> findAllByProduct_Id(Long productId);
 }

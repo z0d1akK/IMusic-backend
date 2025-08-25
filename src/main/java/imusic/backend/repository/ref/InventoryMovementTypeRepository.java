@@ -7,6 +7,6 @@ import imusic.backend.entity.ref.InventoryMovementType;
 import java.util.Optional;
 
 @Repository
-public interface InventoryMovementTypeRepository extends JpaRepository<InventoryMovementType, Long> {
+public interface InventoryMovementTypeRepository extends JpaRepository<InventoryMovementType, Long>{
     Optional<InventoryMovementType> findByCode(String code);
 }

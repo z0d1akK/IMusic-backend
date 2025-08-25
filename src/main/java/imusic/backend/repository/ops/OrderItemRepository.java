@@ -7,6 +7,6 @@ import imusic.backend.entity.ops.OrderItem;
 import java.util.Optional;
 
 @Repository
-public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long>{
     Optional<OrderItem> findByProductId(Long productId);
 }
