@@ -1,3 +1,18 @@
 package imusic.backend.dto.create.ref;
 
-public class ProductCategoryCreateDto extends BaseRefCreateDto{}
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductCategoryCreateDto {
+    @NotBlank
+    private String code;
+    @NotBlank
+    private String name;
+}
