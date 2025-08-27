@@ -15,6 +15,7 @@ public interface ProductAttributeMapper {
     @Mapping(source = "categoryAttribute.name", target = "categoryAttributeName")
     @Mapping(source = "product.id",             target = "productId")
     @Mapping(source = "product.name",           target = "productName")
+    @Mapping(source = "categoryAttribute.defaultValue", target = "defaultValue")
     ProductAttributeResponseDto toResponse(ProductAttribute entity);
 
     @Mapping(target = "categoryAttribute", expression = "java(categoryAttributeResolver.resolve(dto.getCategoryAttributeId()))")

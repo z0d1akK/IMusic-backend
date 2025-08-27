@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CategoryAttributeResponseDto {
     private Long id;
     private String name;
+    private String value;
     private Long categoryId;
     private String categoryCode;
     private String categoryName;

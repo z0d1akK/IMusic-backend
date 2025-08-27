@@ -24,6 +24,11 @@ public class InventoryMovementTypeController {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @PostMapping("/filter")
+    public ResponseEntity<List<InventoryMovementTypeResponseDto>> getWithFilters(@RequestBody InventoryMovementTypeRequestDto request) {
+        return ResponseEntity.ok(service.getMovementsWithFilters(request));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<InventoryMovementTypeResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(service.getById(id));
@@ -46,10 +51,5 @@ public class InventoryMovementTypeController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/filter")
-    public ResponseEntity<List<InventoryMovementTypeResponseDto>> getWithFilters(@RequestBody InventoryMovementTypeRequestDto request) {
-        return ResponseEntity.ok(service.getMovementsWithFilters(request));
     }
 }

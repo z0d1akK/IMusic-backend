@@ -1,6 +1,7 @@
 package imusic.backend.dto.response.ops;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,5 @@ public class ProductResponseDto {
     private String imagePath;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<ProductAttributeResponseDto> attributes;
 }

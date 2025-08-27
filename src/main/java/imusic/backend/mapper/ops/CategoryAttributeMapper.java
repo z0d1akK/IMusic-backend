@@ -13,9 +13,11 @@ public interface CategoryAttributeMapper {
     @Mapping(source = "category.id",   target = "categoryId")
     @Mapping(source = "category.code", target = "categoryCode")
     @Mapping(source = "category.name", target = "categoryName")
+    @Mapping(source = "defaultValue", target = "defaultValue")
     CategoryAttributeResponseDto toResponse(CategoryAttribute entity);
 
     @Mapping(target = "category", expression = "java(productCategoryResolver.resolve(dto.getCategoryId()))")
+    @Mapping(target = "defaultValue", source = "dto.defaultValue")
     CategoryAttribute toEntity(CategoryAttributeCreateDto dto,
                                @Context ProductCategoryResolver productCategoryResolver);
 

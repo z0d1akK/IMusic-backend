@@ -22,6 +22,8 @@ public class ClientResponseDto {
     private String documentsPath;
     private Long userId;
     private String username;
+    private String statusCode;
+    private String userCreatedAt;
     private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -16,6 +16,12 @@ public interface UserMapper {
 
     @Mapping(source = "role.name", target = "roleName")
     @Mapping(source = "status.name", target = "statusName")
+    @Mapping(source = "role.id", target = "roleId")
+    @Mapping(source = "status.id", target = "statusId")
+    @Mapping(source = "blocked", target = "isBlocked")
+    @Mapping(source = "deleted", target = "isDeleted")
+    @Mapping(source = "updatedAt", target = "updatedAt")
+    @Mapping(source = "lastLoginAt", target = "lastLoginAt")
     UserResponseDto toResponse(User user);
 
     @Mapping(target = "role", expression = "java(roleResolver.resolve(dto.getRoleId()))")
@@ -37,4 +43,20 @@ public interface UserMapper {
                       @Context RoleResolver roleResolver,
                       @Context UserStatusResolver userStatusResolver,
                       @MappingTarget User entity);
+
+    @Mapping(target = "role", expression = "java(roleResolver.resolve(dto.getRoleId()))")
+    @Mapping(target = "status", expression = "java(userStatusResolver.resolve(dto.getStatusId()))")
+    @Mapping(target = "id", source = "dto.id")
+    @Mapping(target = "username", source = "dto.username")
+    @Mapping(target = "fullName", source = "dto.fullName")
+    @Mapping(target = "email", source = "dto.email")
+    @Mapping(target = "avatarPath", source = "dto.avatarPath")
+    @Mapping(target = "isBlocked", source = "dto.isBlocked")
+    @Mapping(target = "isDeleted", source = "dto.isDeleted")
+    @Mapping(target = "createdAt", source = "dto.createdAt")
+    @Mapping(target = "updatedAt", source = "dto.updatedAt")
+    @Mapping(target = "lastLoginAt", source = "dto.lastLoginAt")
+    User responseToEntity(UserResponseDto dto,
+                          @Context RoleResolver roleResolver,
+                          @Context UserStatusResolver userStatusResolver);
 }

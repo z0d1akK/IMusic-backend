@@ -16,10 +16,12 @@ public interface ClientMapper {
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "createdBy.username", target = "createdBy")
+    @Mapping(source = "user.createdAt", target = "userCreatedAt")
+    @Mapping(source = "user.status.code", target = "statusCode")
     ClientResponseDto toResponse(Client entity);
 
     @Mapping(target = "user", expression = "java(userResolver.resolve(dto.getUserId()))")
-    @Mapping(target = "createdBy", ignore = true) // задаётся в сервисе
+    @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

@@ -1,10 +1,13 @@
 package imusic.backend.dto.create.ops;
 
+import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -26,4 +29,5 @@ public class ProductCreateDto {
     private Integer warehouseQuantity;
     private Integer minStockLevel;
     private String imagePath;
+    private List<ProductAttributeResponseDto> attributes;
 }

@@ -17,7 +17,9 @@ public class UserResponseDto {
     private String fullName;
     private String email;
     private String avatarPath;
+    private Long roleId;
     private String roleName;
+    private Long statusId;
     private String statusName;
     private Boolean isBlocked;
     private Boolean isDeleted;

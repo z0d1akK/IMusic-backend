@@ -75,7 +75,6 @@ public class RoleServiceImpl implements RoleService {
     @Cacheable(cacheNames = "roles", key = "'roles-' + #request.page + '-' + #request.size + '-' + #request.sortBy + '-' + #request.sortDirection + '-' + #request.code + '-' + #request.name")
     public List<RoleResponseDto> getRolesWithFilters(RoleRequestDto request) {
         List<Role> roles = roleRepository.findAll();
-
         roles = roles.stream()
                 .filter(r -> matchesFilter(r.getCode(), request.getCode()))
                 .filter(r -> matchesFilter(r.getName(), request.getName()))

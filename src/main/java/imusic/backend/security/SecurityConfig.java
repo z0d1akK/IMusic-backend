@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/uploads/**", "/api/products/paged",
                                 "/api/ref/product-categories", "/api/ref/product-units","/api/products/*",
                                 "/api/products/*/attributes-with-values").permitAll()
+                        .requestMatchers("/api/ref/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)
