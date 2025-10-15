@@ -38,9 +38,6 @@ public class Client implements Serializable {
     @Column(name = "contact_person")
     private String contactPerson;
 
-    @Column(name = "documents_path")
-    private String documentsPath;
-
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

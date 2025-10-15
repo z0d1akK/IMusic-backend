@@ -2,7 +2,6 @@ package imusic.backend.service.ops;
 
 import imusic.backend.dto.create.ops.CategoryAttributeCreateDto;
 import imusic.backend.dto.update.ops.CategoryAttributeUpdateDto;
-import imusic.backend.dto.request.ops.CategoryAttributeRequestDto;
 import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
 
 import java.util.List;

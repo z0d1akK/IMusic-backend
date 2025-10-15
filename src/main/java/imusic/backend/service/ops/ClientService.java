@@ -4,7 +4,6 @@ import imusic.backend.dto.create.ops.ClientCreateDto;
 import imusic.backend.dto.update.ops.ClientUpdateDto;
 import imusic.backend.dto.request.ops.ClientRequestDto;
 import imusic.backend.dto.response.ops.ClientResponseDto;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

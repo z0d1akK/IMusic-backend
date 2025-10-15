@@ -36,6 +36,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/uploads/**", "/api/products/paged",
                                 "/api/ref/product-categories", "/api/ref/product-units","/api/products/*",
                                 "/api/products/*/attributes-with-values").permitAll()
+                        .requestMatchers("/api/clients/profile").hasRole("CLIENT")
+                        .requestMatchers("/api/users/clients/available","/api/users/by-role/", "/api/users/clients",
+                                "/api/clients/**", "/api/products/**","/api/inventory-movements/**",
+                                "/api/product-attributes/**","/api/category-attributes/**",
+                                "/api/ref/*").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/ref/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

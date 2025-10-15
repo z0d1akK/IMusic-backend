@@ -18,12 +18,14 @@ public interface InventoryMovementMapper {
     @Mapping(source = "movementType.code",       target = "movementTypeCode")
     @Mapping(source = "movementType.name",       target = "movementTypeName")
     @Mapping(source = "createdBy.id",            target = "createdById")
-    @Mapping(source = "createdBy.username",      target = "createdByName")
+    @Mapping(source = "createdBy.username",      target = "createdByUsername")
+    @Mapping(source = "comment",                 target = "comment")
     InventoryMovementResponseDto toResponse(InventoryMovement entity);
 
     @Mapping(target = "product",       expression = "java(productResolver.resolve(dto.getProductId()))")
     @Mapping(target = "movementType",  expression = "java(movementTypeResolver.resolve(dto.getMovementTypeId()))")
     @Mapping(target = "createdBy",     expression = "java(userResolver.resolve(dto.getCreatedById()))")
+    @Mapping(source = "comment",                 target = "comment")
     InventoryMovement toEntity(InventoryMovementCreateDto dto,
                                @Context ProductResolver productResolver,
                                @Context InventoryMovementTypeResolver movementTypeResolver,

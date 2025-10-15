@@ -1,7 +1,5 @@
 package imusic.backend.entity.ops;
 
-import imusic.backend.entity.ref.PaymentMethod;
-import imusic.backend.entity.ref.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import imusic.backend.entity.ref.OrderStatus;
@@ -34,14 +32,6 @@ public class Order implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "status_id", nullable = false)
     private OrderStatus status;
-
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "payment_status_id", nullable = false)
-    private PaymentStatus paymentStatus;
-
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "payment_method_id", nullable = false)
-    private PaymentMethod paymentMethod;
 
     @Column(name = "delivery_address", columnDefinition = "text")
     private String deliveryAddress;

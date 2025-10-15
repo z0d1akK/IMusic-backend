@@ -13,5 +13,6 @@ public class InventoryMovementCreateDto {
     private Long movementTypeId;
     @NotNull
     private Long createdById;
+    private String comment;
 }
 

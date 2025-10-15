@@ -22,12 +22,6 @@ public class OrderResponseDto {
     private Long statusId;
     private String statusCode;
     private String statusName;
-    private Long paymentStatusId;
-    private String paymentStatusCode;
-    private String paymentStatusName;
-    private Long paymentMethodId;
-    private String paymentMethodCode;
-    private String paymentMethodName;
     private BigDecimal totalPrice;
     private String deliveryAddress;
     private LocalDateTime deliveryDate;

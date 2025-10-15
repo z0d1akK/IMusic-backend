@@ -22,10 +22,6 @@ public class OrderCreateDto {
     @NotNull
     private Long statusId;
     @NotNull
-    private Long paymentStatusId;
-    @NotNull
-    private Long paymentMethodId;
-    @NotNull
     private String deliveryAddress;
     @NotNull
     private LocalDateTime deliveryDate;

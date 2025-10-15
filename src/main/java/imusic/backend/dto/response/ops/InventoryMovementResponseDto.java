@@ -16,13 +16,13 @@ public class InventoryMovementResponseDto {
     private Long productId;
     private String productName;
     private Integer quantity;
+    private String comment;
     private Long movementTypeId;
     private String movementTypeCode;
     private String movementTypeName;
     private Long createdById;
-    private String createdByName;
+    private String createdByUsername;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Boolean isActive;
 }
 

@@ -17,6 +17,8 @@ public class ProductRequestDto {
     private Double maxPrice;
     private Integer minStockLevel;
     private Integer maxStockLevel;
+    private Integer minWarehouseQuantity;
+    private Integer maxWarehouseQuantity;
     @NotNull
     private Integer page;
     @NotNull

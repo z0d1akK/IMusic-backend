@@ -34,14 +34,14 @@ public class InventoryMovement implements Serializable {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @Column(name = "comment")
+    private String comment;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @Column(name = "is_active")
-    private Boolean isActive = true;
 
     @PrePersist
     public void prePersist() {

@@ -44,9 +44,6 @@ public class Product implements Serializable {
     @Column(name = "min_stock_level")
     private Integer minStockLevel;
 
-    @Column(name = "is_active")
-    private Boolean isActive = true;
-
     @Column(name = "image_path")
     private String imagePath;
 

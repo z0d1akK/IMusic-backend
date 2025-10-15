@@ -15,8 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class OrderUpdateDto {
     private Long statusId;
-    private Long paymentStatusId;
-    private Long paymentMethodId;
+    private Long createdById;
     @Size(max = 4000)
     private String deliveryAddress;
     private LocalDateTime deliveryDate;

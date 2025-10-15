@@ -13,8 +13,6 @@ import java.util.List;
 public class OrderRequestDto {
     private Long clientId;
     private Long statusId;
-    private Long paymentStatusId;
-    private Long paymentMethodId;
     private String deliveryAddress;
     @NotNull
     private Integer page;

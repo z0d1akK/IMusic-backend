@@ -1,6 +1,5 @@
 package imusic.backend.dto.request.ops;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.List;
@@ -13,11 +12,9 @@ import java.util.List;
 public class InventoryMovementRequestDto {
     private Long productId;
     private Long movementTypeId;
+    private Integer quantity;
     private Long createdById;
-    private Boolean isActive;
-    @NotNull
     private Integer page;
-    @NotNull
     private Integer size;
     private String sortBy;
     private String sortDirection;
