@@ -39,13 +39,12 @@ public class OrderStatusHistoryServiceImpl implements OrderStatusHistoryService 
 
     @Override
     @CacheEvict(cacheNames = "orderHistory", allEntries = true)
-    public void addStatusHistory(Long orderId, Long oldStatusId, Long newStatusId, Long changedById, String comment) {
+    public void addStatusHistory(Long orderId, Long oldStatusId, Long newStatusId, Long changedById) {
         OrderStatusHistoryCreateDto dto = new OrderStatusHistoryCreateDto();
         dto.setOrderId(orderId);
         dto.setOldStatusId(oldStatusId);
         dto.setNewStatusId(newStatusId);
         dto.setChangedById(changedById);
-        dto.setComment(comment);
 
         historyRepository.save(historyMapper.toEntity(dto, orderResolver, orderStatusResolver, userResolver));
     }

@@ -14,6 +14,9 @@ public interface CartItemMapper {
     @Mapping(source = "cart.id", target = "cartId")
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.name", target = "productName")
+    @Mapping(source = "product.price", target = "productPrice")
+    @Mapping(source = "product.stockQuantity", target = "productStockQuantity")
+    @Mapping(source = "product.imagePath", target = "productImagePath")
     CartItemResponseDto toResponse(CartItem entity);
 
     @Mapping(target = "cart", expression = "java(cartResolver.resolve(dto.getCartId()))")
@@ -25,7 +28,7 @@ public interface CartItemMapper {
     @Mapping(target = "product", expression = "java(productResolver.resolve(dto.getProductId()))")
     @Mapping(target = "quantity", source = "quantity")
     void updateEntity(CartItemUpdateDto dto,
-                             @MappingTarget CartItem entity,
-                             @Context CartResolver cartResolver,
-                             @Context ProductResolver productResolver);
+                      @MappingTarget CartItem entity,
+                      @Context CartResolver cartResolver,
+                      @Context ProductResolver productResolver);
 }

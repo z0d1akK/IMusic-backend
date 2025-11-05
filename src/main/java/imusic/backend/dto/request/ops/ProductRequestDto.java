@@ -5,16 +5,14 @@ import lombok.*;
 
 import java.util.List;
 
-@EqualsAndHashCode(callSuper=false)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRequestDto {
     private Long categoryId;
-    private Boolean isActive;
-    private Double minPrice;
-    private Double maxPrice;
+    private Float minPrice;
+    private Float maxPrice;
     private Integer minStockLevel;
     private Integer maxStockLevel;
     private Integer minWarehouseQuantity;
@@ -26,4 +24,5 @@ public class ProductRequestDto {
     private String sortBy;
     private String sortDirection;
     private List<String> filters;
+    private String search;
 }

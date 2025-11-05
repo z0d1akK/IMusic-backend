@@ -158,16 +158,23 @@ public class InventoryMovementServiceImpl implements InventoryMovementService {
     }
 
     private Comparator<InventoryMovement> getMovementSortComparator(String sortBy, String sortDirection) {
-        Comparator<InventoryMovement> comparator = switch (sortBy != null ? sortBy : "") {
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
+
+        Comparator<InventoryMovement> comparator = switch (sortBy) {
             case "quantity" -> Comparator.comparing(InventoryMovement::getQuantity, Comparator.nullsLast(Integer::compareTo));
             case "createdAt" -> Comparator.comparing(InventoryMovement::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo));
             default -> Comparator.comparing(InventoryMovement::getId);
         };
+
         if ("desc".equalsIgnoreCase(sortDirection)) {
             comparator = comparator.reversed();
         }
+
         return comparator;
     }
+
 
     private void applyStockChange(InventoryMovement movement) {
         String typeCode = movement.getMovementType().getCode();

@@ -14,19 +14,17 @@ import imusic.backend.mapper.resolver.ops.ClientResolver;
 import imusic.backend.mapper.resolver.ops.OrderResolver;
 import imusic.backend.mapper.resolver.ops.ProductResolver;
 import imusic.backend.mapper.resolver.ops.UserResolver;
-import imusic.backend.mapper.resolver.ref.*;
+import imusic.backend.mapper.resolver.ref.OrderStatusResolver;
 import imusic.backend.repository.ops.OrderRepository;
 import imusic.backend.repository.ref.OrderStatusRepository;
 import imusic.backend.service.ops.InventoryMovementService;
 import imusic.backend.service.ops.OrderService;
 import imusic.backend.service.ops.OrderStatusHistoryService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +33,7 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
+
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
@@ -57,7 +56,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponseDto> getOrdersByClientId(Long clientId) {
         return orderRepository.findAll().stream()
-                .filter(order -> order.getClient().getId().equals(clientId))
+                .filter(order -> order.getClient() != null && order.getClient().getId().equals(clientId))
                 .map(orderMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -74,8 +73,9 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderMapper.toEntity(dto, clientResolver, userResolver, orderStatusResolver);
 
         if (order.getStatus() == null) {
-            OrderStatus newStatus = orderStatusRepository.getById(1L);
-            order.setStatus(newStatus);
+            OrderStatus defaultStatus = orderStatusRepository.findById(1L)
+                    .orElseThrow(() -> new AppException("Статус по умолчанию не найден"));
+            order.setStatus(defaultStatus);
         }
 
         List<OrderItem> items = dto.getItems().stream()
@@ -86,17 +86,18 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(items);
 
         BigDecimal total = BigDecimal.ZERO;
-
-        for (OrderItem item : order.getItems()) {
+        for (OrderItem item : items) {
             if (item.getProduct() == null || item.getProduct().getPrice() == null) {
-                throw new AppException("Товар или его цена не указаны в позиции заказа");
+                throw new AppException("Некорректная позиция заказа — отсутствует продукт или цена");
             }
-            BigDecimal unitPrice = BigDecimal.valueOf(item.getProduct().getPrice());
-            item.setUnitPrice(unitPrice);
 
+            BigDecimal unitPrice = BigDecimal.valueOf(item.getProduct().getPrice());
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+            item.setUnitPrice(unitPrice);
+            item.setTotalPrice(lineTotal);
             total = total.add(lineTotal);
         }
+
         order.setTotalPrice(total);
 
         Order saved = orderRepository.save(order);
@@ -124,6 +125,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto update(Long id, OrderUpdateDto dto) {
         Order existing = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException("Заказ не найден, ID: " + id));
+
         if (dto.getStatusId() != null && !dto.getStatusId().equals(existing.getStatus().getId())) {
             OrderStatus newStatus = orderStatusResolver.resolve(dto.getStatusId());
 
@@ -136,12 +138,13 @@ public class OrderServiceImpl implements OrderService {
 
             existing.setStatus(newStatus);
 
-            if (newStatus.getCode().equals("CANCELLED") || newStatus.getCode().equals("RETURNED")) {
+            if (newStatus.getCode().equalsIgnoreCase("CANCELLED") ||
+                    newStatus.getCode().equalsIgnoreCase("RETURNED")) {
                 for (OrderItem item : existing.getItems()) {
                     inventoryMovementService.createInventoryMovement(
                             item.getProduct(),
                             item.getQuantity(),
-                            newStatus.getCode().equals("RETURNED") ? "INCOME" : "RETURN_TO_STOCK",
+                            newStatus.getCode().equalsIgnoreCase("RETURNED") ? "INCOME" : "RETURN_TO_STOCK",
                             "Возврат по заказу ID: " + existing.getId()
                     );
                 }
@@ -157,63 +160,86 @@ public class OrderServiceImpl implements OrderService {
         if (!orderRepository.existsById(id)) {
             throw new AppException("Заказ не найден, ID: " + id);
         }
-
         orderStatusHistoryService.deleteHistoryByOrderId(id);
         orderRepository.deleteById(id);
     }
 
-//
-//    @Override
-//    public List<OrderResponseDto> getOrdersWithFilters(OrderRequestDto request) {
-//
-//        List<Order> orders = orderRepository.findAll();
-//        if (request.get() != null) {
-//            products = products.stream()
-//                    .filter(p -> p.getCategory() != null && p.getCategory().getId().equals(request.getCategoryId()))
-//                    .collect(Collectors.toList());
-//        }
-//
-//        orders = orders.stream()
-//                .filter(o -> orderId == null || o.getId().equals(orderId))
-//                .filter(o -> clientId == null || (o.getClient() != null && o.getClient().getId().equals(clientId)))
-//                .filter(o -> statusId == null || (o.getStatus() != null && o.getStatus().getId().equals(statusId)))
-//                .filter(o -> createdById == null || (o.getCreatedBy() != null && o.getCreatedBy().getId().equals(createdById)))
-//                .filter(o -> minTotalPrice == null || (o.getTotalPrice() != null && o.getTotalPrice().compareTo(BigDecimal.valueOf(minTotalPrice)) >= 0))
-//                .filter(o -> maxTotalPrice == null || (o.getTotalPrice() != null && o.getTotalPrice().compareTo(BigDecimal.valueOf(maxTotalPrice)) <= 0))
-//                .filter(o -> fromDate == null || (o.getCreatedAt() != null && o.getCreatedAt().isAfter(LocalDateTime.parse(fromDate))))
-//                .filter(o -> toDate == null || (o.getCreatedAt() != null && o.getCreatedAt().isBefore(LocalDateTime.parse(toDate))))
-//                .filter(o -> hasItems == null || (hasItems.equals(!o.getItems().isEmpty())))
-//                .collect(Collectors.toList());
-//
-//        orders.sort(getOrderSortComparator(sortBy, sortDir));
-//
-//        int fromIndex = Math.max(0, page * size);
-//        int toIndex = Math.min(fromIndex + size, orders.size());
-//
-//        return orders.subList(fromIndex, toIndex).stream()
-//                .map(orderMapper::toResponse)
-//                .collect(Collectors.toList());
-//    }
-//
-//
-//    private Comparator<Order> getOrderSortComparator(String sortBy, String sortDir) {
-//        Comparator<Order> comparator = switch (sortBy != null ? sortBy : "") {
-//            case "createdAt" -> Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
-//            case "totalPrice" -> Comparator.comparing(Order::getTotalPrice, Comparator.nullsLast(BigDecimal::compareTo));
-//            case "status" -> Comparator.comparing(o -> o.getStatus() != null ? safeString(o.getStatus().getName()) : "");
-//            case "client" -> Comparator.comparing(o -> o.getClient() != null ? safeString(o.getClient().getCompanyName()) : "");
-//            default -> Comparator.comparing(Order::getId);
-//        };
-//
-//        if ("desc".equalsIgnoreCase(sortDir)) {
-//            comparator = comparator.reversed();
-//        }
-//
-//        return comparator;
-//    }
-//
-//    private String safeString(String value) {
-//        return value != null ? value.toLowerCase() : "";
-//    }
-//}
+    @Override
+    public List<OrderResponseDto> getOrdersWithFilters(OrderRequestDto request) {
+        List<Order> orders = orderRepository.findAll();
+
+        Long clientId = request.getClientId();
+        Long statusId = request.getStatusId();
+        Long createdById = request.getCreatedById();
+        Double minTotal = request.getMinTotalPrice();
+        Double maxTotal = request.getMaxTotalPrice();
+        String fromDate = request.getFromDate();
+        String toDate = request.getToDate();
+
+        String search = (request.getFilters() != null && !request.getFilters().isEmpty())
+                ? request.getFilters().get(0).toLowerCase()
+                : null;
+
+        orders = orders.stream()
+                .filter(o -> clientId == null || (o.getClient() != null && o.getClient().getId().equals(clientId)))
+                .filter(o -> statusId == null || (o.getStatus() != null && o.getStatus().getId().equals(statusId)))
+                .filter(o -> createdById == null || (o.getCreatedBy() != null && o.getCreatedBy().getId().equals(createdById)))
+                .filter(o -> minTotal == null || (o.getTotalPrice() != null && o.getTotalPrice().doubleValue() >= minTotal))
+                .filter(o -> maxTotal == null || (o.getTotalPrice() != null && o.getTotalPrice().doubleValue() <= maxTotal))
+                .filter(o -> {
+                    if (fromDate == null && toDate == null) return true;
+                    if (o.getCreatedAt() == null) return false;
+
+                    boolean afterMin = fromDate == null || !o.getCreatedAt().isBefore(java.time.LocalDate.parse(fromDate).atStartOfDay());
+                    boolean beforeMax = toDate == null || !o.getCreatedAt().isAfter(java.time.LocalDate.parse(toDate).atTime(23, 59, 59));
+
+                    return afterMin && beforeMax;
+                })
+                .filter(o -> search == null ||
+                        (o.getClient() != null && safeString(o.getClient().getCompanyName()).contains(search)) ||
+                        (o.getDeliveryAddress() != null && safeString(o.getDeliveryAddress()).contains(search)) ||
+                        (o.getComment() != null && safeString(o.getComment()).contains(search)))
+                .sorted(getOrderSortComparator(request.getSortBy(), request.getSortDirection()))
+                .collect(Collectors.toList());
+
+        int page = Math.max(0, request.getPage());
+        int size = Math.max(1, request.getSize());
+        int fromIndex = Math.min(page * size, orders.size());
+        int toIndex = Math.min(fromIndex + size, orders.size());
+
+        return orders.subList(fromIndex, toIndex)
+                .stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    private Comparator<Order> getOrderSortComparator(String sortBy, String sortDirection) {
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
+
+        Comparator<Order> comparator = switch (sortBy) {
+            case "createdAt" -> Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "totalPrice" -> Comparator.comparing(Order::getTotalPrice, Comparator.nullsLast(BigDecimal::compareTo));
+            case "status" -> Comparator.comparing(
+                    o -> o.getStatus() != null ? safeString(o.getStatus().getName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
+            case "client" -> Comparator.comparing(
+                    o -> o.getClient() != null ? safeString(o.getClient().getCompanyName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
+            default -> Comparator.comparing(Order::getId);
+        };
+
+        if ("desc".equalsIgnoreCase(sortDirection)) {
+            comparator = comparator.reversed();
+        }
+
+        return comparator;
+    }
+
+
+    private String safeString(String value) {
+        return value != null ? value.toLowerCase() : "";
+    }
 }

@@ -145,23 +145,26 @@ public class ClientServiceImpl implements ClientService {
     }
 
     private Comparator<Client> getClientSortComparator(String sortBy, String sortDirection) {
-        Comparator<Client> comparator = Comparator.comparing(Client::getId); // базовая сортировка по id
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
 
-        Comparator<Client> secondaryComparator = switch (sortBy != null ? sortBy : "") {
-            case "companyName" -> Comparator.comparing(c -> safeString(c.getCompanyName()));
-            case "email" -> Comparator.comparing(c -> safeString(c.getEmail()));
-            case "phone" -> Comparator.comparing(c -> safeString(c.getPhone()));
-            case "address" -> Comparator.comparing(c -> safeString(c.getAddress()));
+        Comparator<Client> comparator = switch (sortBy) {
+            case "companyName" -> Comparator.comparing(c -> safeString(c.getCompanyName()), String.CASE_INSENSITIVE_ORDER);
+            case "email" -> Comparator.comparing(c -> safeString(c.getEmail()), String.CASE_INSENSITIVE_ORDER);
+            case "phone" -> Comparator.comparing(c -> safeString(c.getPhone()), String.CASE_INSENSITIVE_ORDER);
+            case "address" -> Comparator.comparing(c -> safeString(c.getAddress()), String.CASE_INSENSITIVE_ORDER);
             case "createdAt" -> Comparator.comparing(Client::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
             default -> Comparator.comparing(Client::getId);
         };
 
         if ("desc".equalsIgnoreCase(sortDirection)) {
-            secondaryComparator = secondaryComparator.reversed();
+            comparator = comparator.reversed();
         }
 
-        return comparator.thenComparing(secondaryComparator);
+        return comparator;
     }
+
 
     private String safeString(String value) {
         return value != null ? value.toLowerCase() : "";

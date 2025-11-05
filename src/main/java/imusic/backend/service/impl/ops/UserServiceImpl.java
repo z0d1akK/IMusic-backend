@@ -263,24 +263,31 @@ public class UserServiceImpl implements UserService {
     }
 
     private Comparator<User> getSortComparator(String sortBy, String sortDirection) {
-        Comparator<User> comparator = Comparator.comparing(User::isDeleted);
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
 
-        Comparator<User> secondaryComparator = switch (sortBy != null ? sortBy : "") {
-            case "username" -> Comparator.comparing(u -> safeString(u.getUsername()));
-            case "fullName" -> Comparator.comparing(u -> safeString(u.getFullName()));
-            case "email" -> Comparator.comparing(u -> safeString(u.getEmail()));
-            case "role" -> Comparator.comparing(u -> u.getRole() != null ? safeString(u.getRole().getName()) : "");
-            case "status" -> Comparator.comparing(u -> u.getStatus() != null ? safeString(u.getStatus().getName()) : "");
+        Comparator<User> comparator = switch (sortBy) {
+            case "username" -> Comparator.comparing(u -> safeString(u.getUsername()), String.CASE_INSENSITIVE_ORDER);
+            case "fullName" -> Comparator.comparing(u -> safeString(u.getFullName()), String.CASE_INSENSITIVE_ORDER);
+            case "email" -> Comparator.comparing(u -> safeString(u.getEmail()), String.CASE_INSENSITIVE_ORDER);
+            case "roleName" -> Comparator.comparing(
+                    u -> u.getRole() != null ? safeString(u.getRole().getName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
+            case "statusName" -> Comparator.comparing(
+                    u -> u.getStatus() != null ? safeString(u.getStatus().getName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
             case "createdAt" -> Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
             default -> Comparator.comparing(User::getId);
         };
 
         if ("desc".equalsIgnoreCase(sortDirection)) {
-            secondaryComparator = secondaryComparator.reversed();
+            comparator = comparator.reversed();
         }
 
-        return comparator.thenComparing(secondaryComparator);
+        return comparator;
     }
+
 
     private String safeString(String value) {
         return value != null ? value.toLowerCase() : "";

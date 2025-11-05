@@ -115,22 +115,30 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     }
 
     private Comparator<ProductAttribute> getAttributeSortComparator(String sortBy, String sortDirection) {
-        Comparator<ProductAttribute> comparator = Comparator.comparing(ProductAttribute::getId);
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
 
-        Comparator<ProductAttribute> secondaryComparator = switch (sortBy != null ? sortBy : "") {
-            case "value" -> Comparator.comparing(ProductAttribute::getValue, Comparator.nullsLast(String::compareToIgnoreCase));
-            case "productName" -> Comparator.comparing(a -> a.getProduct() != null ? a.getProduct().getName() : "",
-                                                       Comparator.nullsLast(String::compareToIgnoreCase));
-            case "categoryAttributeName" -> Comparator.comparing(a -> a.getCategoryAttribute() != null ? a.getCategoryAttribute().getName() : "",
-                                                       Comparator.nullsLast(String::compareToIgnoreCase));
+        Comparator<ProductAttribute> comparator = switch (sortBy) {
+            case "value" -> Comparator.comparing(a -> safeString(a.getValue()), String.CASE_INSENSITIVE_ORDER);
+            case "product" -> Comparator.comparing(
+                    a -> a.getProduct() != null ? safeString(a.getProduct().getName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
+            case "categoryAttribute" -> Comparator.comparing(
+                    a -> a.getCategoryAttribute() != null ? safeString(a.getCategoryAttribute().getName()) : "",
+                    String.CASE_INSENSITIVE_ORDER);
             default -> Comparator.comparing(ProductAttribute::getId);
         };
 
         if ("desc".equalsIgnoreCase(sortDirection)) {
-            secondaryComparator = secondaryComparator.reversed();
+            comparator = comparator.reversed();
         }
 
-        return comparator.thenComparing(secondaryComparator);
+        return comparator;
+    }
+
+    private String safeString(String value) {
+        return value != null ? value.toLowerCase() : "";
     }
 
     @Override

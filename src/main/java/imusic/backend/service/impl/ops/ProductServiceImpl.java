@@ -191,62 +191,89 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDto> getProductsWithFilters(ProductRequestDto request) {
         List<Product> products = productRepository.findAll();
 
+        if (request.getFilters() != null && !request.getFilters().isEmpty()) {
+            for (String filter : request.getFilters()) {
+                if (filter.startsWith("name:")) {
+                    String value = filter.substring(5).trim().toLowerCase();
+                    products = products.stream()
+                            .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(value))
+                            .collect(Collectors.toList());
+                }
+            }
+        }
+
         if (request.getCategoryId() != null) {
             products = products.stream()
                     .filter(p -> p.getCategory() != null && p.getCategory().getId().equals(request.getCategoryId()))
                     .collect(Collectors.toList());
         }
-        if (request.getIsActive() != null) {
-            products = products.stream()
-                    .filter(p -> p.getIsActive() != null && p.getIsActive().equals(request.getIsActive()))
-                    .collect(Collectors.toList());
-        }
-        if (request.getMinPrice() != null) {
+
+        if (request.getMinPrice() != null)
             products = products.stream()
                     .filter(p -> p.getPrice() != null && p.getPrice() >= request.getMinPrice())
                     .collect(Collectors.toList());
-        }
-        if (request.getMaxPrice() != null) {
+
+        if (request.getMaxPrice() != null)
             products = products.stream()
                     .filter(p -> p.getPrice() != null && p.getPrice() <= request.getMaxPrice())
                     .collect(Collectors.toList());
-        }
-        if (request.getMinStockLevel() != null) {
+
+        if (request.getMinStockLevel() != null)
             products = products.stream()
                     .filter(p -> p.getStockQuantity() != null && p.getStockQuantity() >= request.getMinStockLevel())
                     .collect(Collectors.toList());
-        }
-        if (request.getMaxStockLevel() != null) {
+
+        if (request.getMaxStockLevel() != null)
             products = products.stream()
                     .filter(p -> p.getStockQuantity() != null && p.getStockQuantity() <= request.getMaxStockLevel())
                     .collect(Collectors.toList());
-        }
+
+        if (request.getMinWarehouseQuantity() != null)
+            products = products.stream()
+                    .filter(p -> p.getWarehouseQuantity() != null && p.getWarehouseQuantity() >= request.getMinWarehouseQuantity())
+                    .collect(Collectors.toList());
+
+        if (request.getMaxStockLevel() != null)
+            products = products.stream()
+                    .filter(p -> p.getWarehouseQuantity() != null && p.getWarehouseQuantity() <= request.getMaxWarehouseQuantity())
+                    .collect(Collectors.toList());
 
         products.sort(getProductSortComparator(request.getSortBy(), request.getSortDirection()));
 
         int fromIndex = Math.max(0, request.getPage() * request.getSize());
         int toIndex = Math.min(fromIndex + request.getSize(), products.size());
 
-        return products.subList(fromIndex, toIndex).stream()
+        List<Product> pageProducts = products.subList(fromIndex, toIndex);
+
+        return pageProducts.stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
-    private Comparator<Product> getProductSortComparator(String sortBy, String sortDirection) {
-        Comparator<Product> comparator = Comparator.comparing(Product::getId); // базовая сортировка
 
-        Comparator<Product> secondaryComparator = switch (sortBy != null ? sortBy : "") {
-            case "name" -> Comparator.comparing(Product::getName, Comparator.nullsLast(String::compareToIgnoreCase));
-            case "price" -> Comparator.comparing(Product::getPrice, Comparator.nullsLast(Float::compareTo));
-            case "stockQuantity" -> Comparator.comparing(Product::getStockQuantity, Comparator.nullsLast(Integer::compareTo));
-            case "createdAt" -> Comparator.comparing(Product::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo));
-            default -> Comparator.comparing(Product::getId);
+    private Comparator<Product> getProductSortComparator(String sortBy, String sortDirection) {
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "id";
+        }
+        Comparator<Product> comparator = switch (sortBy) {
+            case "name" -> Comparator.comparing(
+                    Product::getName, Comparator.nullsLast(String::compareToIgnoreCase));
+            case "price" -> Comparator.comparing(
+                    Product::getPrice, Comparator.nullsLast(Float::compareTo));
+            case "stockQuantity" -> Comparator.comparing(
+                    Product::getStockQuantity, Comparator.nullsLast(Integer::compareTo));
+            case "warehouseQuantity" -> Comparator.comparing(
+                    Product::getWarehouseQuantity, Comparator.nullsLast(Integer::compareTo));
+            case "createdAt" -> Comparator.comparing(
+                    Product::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo));
+            default -> Comparator.comparing(
+                    Product::getId, Comparator.nullsLast(Long::compareTo));
         };
 
         if ("desc".equalsIgnoreCase(sortDirection)) {
-            secondaryComparator = secondaryComparator.reversed();
+            comparator = comparator.reversed();
         }
-
-        return comparator.thenComparing(secondaryComparator);
+        return comparator;
     }
+
 }

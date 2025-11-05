@@ -15,4 +15,8 @@ public class CartItemResponseDto {
     private Long productId;
     private String productName;
     private Integer quantity;
+    private Float productPrice;
+    private Integer productStockQuantity;
+    private String productImagePath;
 }
+
