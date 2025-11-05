@@ -1,6 +1,5 @@
 package imusic.backend.controller.ops;
 
-import imusic.backend.dto.request.ops.OrderStatusHistoryRequestDto;
 import imusic.backend.dto.response.ops.OrderStatusHistoryResponseDto;
 import imusic.backend.service.ops.OrderStatusHistoryService;
 import lombok.RequiredArgsConstructor;

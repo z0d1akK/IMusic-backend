@@ -177,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
         String toDate = request.getToDate();
 
         String search = (request.getFilters() != null && !request.getFilters().isEmpty())
-                ? request.getFilters().get(0).toLowerCase()
+                ? request.getFilters().getFirst().toLowerCase()
                 : null;
 
         orders = orders.stream()
