@@ -1,6 +1,7 @@
 package imusic.backend.service.impl.ops;
 
 import imusic.backend.dto.create.ops.InventoryMovementCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.update.ops.InventoryMovementUpdateDto;
 import imusic.backend.dto.request.ops.InventoryMovementRequestDto;
 import imusic.backend.dto.response.ops.InventoryMovementResponseDto;
@@ -140,7 +141,7 @@ public class InventoryMovementServiceImpl implements InventoryMovementService {
     }
 
     @Override
-    public List<InventoryMovementResponseDto> getMovementsWithFilters(InventoryMovementRequestDto request) {
+    public PageResponseDto<InventoryMovementResponseDto> getPagedMovements(InventoryMovementRequestDto request) {
         List<InventoryMovement> movements = movementRepository.findAll().stream()
                 .filter(m -> request.getProductId() == null || m.getProduct().getId().equals(request.getProductId()))
                 .filter(m -> request.getMovementTypeId() == null || m.getMovementType().getId().equals(request.getMovementTypeId()))
@@ -149,12 +150,18 @@ public class InventoryMovementServiceImpl implements InventoryMovementService {
 
         movements.sort(getMovementSortComparator(request.getSortBy(), request.getSortDirection()));
 
-        int fromIndex = Math.max(0, request.getPage() * request.getSize());
-        int toIndex = Math.min(fromIndex + request.getSize(), movements.size());
+        int totalElements = movements.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
-        return movements.subList(fromIndex, toIndex).stream()
+        int fromIndex = Math.max(0, request.getPage() * request.getSize());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
+
+        List<InventoryMovementResponseDto> content = movements.subList(fromIndex, toIndex)
+                .stream()
                 .map(movementMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
 
     private Comparator<InventoryMovement> getMovementSortComparator(String sortBy, String sortDirection) {

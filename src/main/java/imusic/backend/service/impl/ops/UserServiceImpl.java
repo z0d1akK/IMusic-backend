@@ -3,6 +3,7 @@ package imusic.backend.service.impl.ops;
 import imusic.backend.dto.auth.ChangeLoginRequest;
 import imusic.backend.dto.auth.ChangePasswordRequest;
 import imusic.backend.dto.request.ops.UserRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.update.ops.UserUpdateDto;
 import imusic.backend.dto.response.ops.UserResponseDto;
 import imusic.backend.entity.ops.User;
@@ -238,7 +239,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponseDto> getUsersWithFilters(UserRequestDto request) {
+    public PageResponseDto<UserResponseDto> getPagedUsers(UserRequestDto request) {
         List<User> users = userRepository.findAll();
 
         if (request.getUsername() != null)
@@ -254,13 +255,20 @@ public class UserServiceImpl implements UserService {
 
         users.sort(getSortComparator(request.getSortBy(), request.getSortDirection()));
 
-        int fromIndex = Math.max(0, request.getPage() * request.getSize());
-        int toIndex = Math.min(fromIndex + request.getSize(), users.size());
+        int totalElements = users.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
-        return users.subList(fromIndex, toIndex).stream()
+        int fromIndex = Math.max(0, request.getPage() * request.getSize());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
+
+        List<UserResponseDto> content = users.subList(fromIndex, toIndex)
+                .stream()
                 .map(userMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
+
 
     private Comparator<User> getSortComparator(String sortBy, String sortDirection) {
         if (sortBy == null || sortBy.isBlank()) {

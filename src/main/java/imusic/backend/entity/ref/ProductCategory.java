@@ -16,7 +16,7 @@ public class ProductCategory {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // MICROPHONES, HEADPHONES, SPEAKERS, DJ_EQUIPMENT, STUDIO_MONITORS, MUSICAL_INSTRUMENTS, ACCESSORIES, CABLES_ADAPTERS, AUDIO_INTERFACE, SOFTWARE
+    private String code;
 
 
     @Column(nullable = false)

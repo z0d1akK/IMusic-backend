@@ -21,17 +21,17 @@ public interface ClientMapper {
     ClientResponseDto toResponse(Client entity);
 
     @Mapping(target = "user", expression = "java(userResolver.resolve(dto.getUserId()))")
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+//    @Mapping(target = "createdBy", ignore = true)
+//    @Mapping(target = "id", ignore = true)
+//    @Mapping(target = "createdAt", ignore = true)
+//    @Mapping(target = "updatedAt", ignore = true)
     Client toEntity(ClientCreateDto dto,
                     @Context UserResolver userResolver);
 
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+//    @Mapping(target = "createdBy", ignore = true)
+//    @Mapping(target = "id", ignore = true)
+//    @Mapping(target = "createdAt", ignore = true)
+//    @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(ClientUpdateDto dto,
                       @Context UserResolver userResolver,
                       @MappingTarget Client entity);

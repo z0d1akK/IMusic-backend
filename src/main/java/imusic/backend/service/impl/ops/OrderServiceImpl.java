@@ -2,24 +2,32 @@ package imusic.backend.service.impl.ops;
 
 import imusic.backend.dto.create.ops.OrderCreateDto;
 import imusic.backend.dto.request.ops.OrderRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.OrderResponseDto;
 import imusic.backend.dto.update.ops.OrderUpdateDto;
 import imusic.backend.entity.ops.Order;
 import imusic.backend.entity.ops.OrderItem;
+import imusic.backend.entity.ops.User;
 import imusic.backend.entity.ref.OrderStatus;
 import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.OrderItemMapper;
 import imusic.backend.mapper.ops.OrderMapper;
+import imusic.backend.mapper.ops.UserMapper;
 import imusic.backend.mapper.resolver.ops.ClientResolver;
 import imusic.backend.mapper.resolver.ops.OrderResolver;
 import imusic.backend.mapper.resolver.ops.ProductResolver;
 import imusic.backend.mapper.resolver.ops.UserResolver;
 import imusic.backend.mapper.resolver.ref.OrderStatusResolver;
+import imusic.backend.mapper.resolver.ref.RoleResolver;
+import imusic.backend.mapper.resolver.ref.UserStatusResolver;
 import imusic.backend.repository.ops.OrderRepository;
+import imusic.backend.repository.ops.UserRepository;
 import imusic.backend.repository.ref.OrderStatusRepository;
+import imusic.backend.service.auth.AuthService;
 import imusic.backend.service.ops.InventoryMovementService;
 import imusic.backend.service.ops.OrderService;
 import imusic.backend.service.ops.OrderStatusHistoryService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +53,11 @@ public class OrderServiceImpl implements OrderService {
     private final OrderStatusHistoryService orderStatusHistoryService;
     private final InventoryMovementService inventoryMovementService;
     private final OrderStatusRepository orderStatusRepository;
+    private final AuthService authService;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final RoleResolver roleResolver;
+    private final UserStatusResolver userStatusResolver;
 
     @Override
     public OrderResponseDto getById(Long id) {
@@ -78,6 +91,10 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(defaultStatus);
         }
 
+        order.setDeliveryAddress(dto.getDeliveryAddress());
+        order.setDeliveryDate(dto.getDeliveryDate());
+        order.setComment(dto.getComment());
+
         List<OrderItem> items = dto.getItems().stream()
                 .map(itemDto -> orderItemMapper.toEntity(itemDto, orderResolver, productResolver))
                 .peek(item -> item.setOrder(order))
@@ -99,6 +116,15 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setTotalPrice(total);
+
+        User currentUser = userMapper.responseToEntity(authService.getCurrentUser(),roleResolver,userStatusResolver);
+        User systemUser = userRepository.findByUsername("system")
+                .orElseThrow(() -> new EntityNotFoundException("Системный пользователь не найден"));
+        if (currentUser.getRole().getCode().equals("ADMIN") || currentUser.getRole().getCode().equals("MANAGER")) {
+            order.setCreatedBy(currentUser);
+        } else {
+            order.setCreatedBy(systemUser);
+        }
 
         Order saved = orderRepository.save(order);
 
@@ -126,6 +152,8 @@ public class OrderServiceImpl implements OrderService {
         Order existing = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException("Заказ не найден, ID: " + id));
 
+        User currentUser = userMapper.responseToEntity(authService.getCurrentUser(), roleResolver, userStatusResolver);
+
         if (dto.getStatusId() != null && !dto.getStatusId().equals(existing.getStatus().getId())) {
             OrderStatus newStatus = orderStatusResolver.resolve(dto.getStatusId());
 
@@ -133,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
                     existing.getId(),
                     existing.getStatus().getId(),
                     newStatus.getId(),
-                    dto.getCreatedById()
+                    currentUser.getId()
             );
 
             existing.setStatus(newStatus);
@@ -151,9 +179,13 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        orderMapper.updateEntity(dto, orderStatusResolver, existing);
+        if (dto.getDeliveryAddress() != null) existing.setDeliveryAddress(dto.getDeliveryAddress());
+        if (dto.getDeliveryDate() != null) existing.setDeliveryDate(dto.getDeliveryDate());
+        if (dto.getComment() != null) existing.setComment(dto.getComment());
+
         return orderMapper.toResponse(orderRepository.save(existing));
     }
+
 
     @Override
     public void delete(Long id) {
@@ -165,7 +197,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponseDto> getOrdersWithFilters(OrderRequestDto request) {
+    public PageResponseDto<OrderResponseDto> getPagedOrders(OrderRequestDto request) {
         List<Order> orders = orderRepository.findAll();
 
         Long clientId = request.getClientId();
@@ -197,20 +229,22 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .filter(o -> search == null ||
                         (o.getClient() != null && safeString(o.getClient().getCompanyName()).contains(search)) ||
-                        (o.getDeliveryAddress() != null && safeString(o.getDeliveryAddress()).contains(search)) ||
                         (o.getComment() != null && safeString(o.getComment()).contains(search)))
                 .sorted(getOrderSortComparator(request.getSortBy(), request.getSortDirection()))
                 .collect(Collectors.toList());
 
-        int page = Math.max(0, request.getPage());
-        int size = Math.max(1, request.getSize());
-        int fromIndex = Math.min(page * size, orders.size());
-        int toIndex = Math.min(fromIndex + size, orders.size());
+        int totalElements = orders.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
-        return orders.subList(fromIndex, toIndex)
+        int fromIndex = Math.max(0, request.getPage() * request.getSize());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
+
+        List<OrderResponseDto> content = orders.subList(fromIndex, toIndex)
                 .stream()
                 .map(orderMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
 
 

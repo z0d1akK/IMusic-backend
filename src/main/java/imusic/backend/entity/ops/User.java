@@ -42,8 +42,6 @@ public class User implements Serializable {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
 
     @PrePersist
     public void prePersist() {

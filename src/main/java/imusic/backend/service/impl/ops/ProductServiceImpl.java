@@ -2,6 +2,7 @@ package imusic.backend.service.impl.ops;
 
 import imusic.backend.dto.create.ops.ProductAttributeCreateDto;
 import imusic.backend.dto.create.ops.ProductCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
 import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
 import imusic.backend.dto.update.ops.ProductAttributeUpdateDto;
@@ -13,6 +14,8 @@ import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.ProductMapper;
 import imusic.backend.mapper.resolver.ref.ProductCategoryResolver;
 import imusic.backend.mapper.resolver.ref.ProductUnitResolver;
+import imusic.backend.repository.ops.InventoryMovementRepository;
+import imusic.backend.repository.ops.OrderItemRepository;
 import imusic.backend.repository.ops.ProductRepository;
 import imusic.backend.service.ops.CategoryAttributeService;
 import imusic.backend.service.ops.ProductAttributeService;
@@ -46,6 +49,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductUnitResolver unitResolver;
     private final ProductAttributeService productAttributeService;
     private final CategoryAttributeService categoryAttributeService;
+    private final InventoryMovementRepository inventoryMovementRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     @Cacheable(cacheNames = "products", key = "'all'")
@@ -132,6 +137,8 @@ public class ProductServiceImpl implements ProductService {
     public void delete(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException("Товар не найден, ID: " + id));
+        inventoryMovementRepository.deleteByProductId(id);
+        orderItemRepository.deleteByProductId(id);
         productRepository.delete(product);
     }
 
@@ -147,7 +154,7 @@ public class ProductServiceImpl implements ProductService {
 
         try {
             String imageName = "product_" + id + "_" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path imagePath = Paths.get("D:/JProjects/ITrack/backend/src/main/resources/uploads/products", imageName);
+            Path imagePath = Paths.get("D:/JProjects/IMusic/backend/src/main/resources/uploads/products", imageName);
             Files.createDirectories(imagePath.getParent());
             file.transferTo(imagePath);
             product.setImagePath("/products/" + imageName);
@@ -186,9 +193,8 @@ public class ProductServiceImpl implements ProductService {
         return categoryAttributes;
     }
 
-
     @Override
-    public List<ProductResponseDto> getProductsWithFilters(ProductRequestDto request) {
+    public PageResponseDto<ProductResponseDto> getPagedProducts(ProductRequestDto request) {
         List<Product> products = productRepository.findAll();
 
         if (request.getFilters() != null && !request.getFilters().isEmpty()) {
@@ -237,18 +243,22 @@ public class ProductServiceImpl implements ProductService {
             products = products.stream()
                     .filter(p -> p.getWarehouseQuantity() != null && p.getWarehouseQuantity() <= request.getMaxWarehouseQuantity())
                     .collect(Collectors.toList());
-
         products.sort(getProductSortComparator(request.getSortBy(), request.getSortDirection()));
 
+        int totalElements = products.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
+
         int fromIndex = Math.max(0, request.getPage() * request.getSize());
-        int toIndex = Math.min(fromIndex + request.getSize(), products.size());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
 
-        List<Product> pageProducts = products.subList(fromIndex, toIndex);
-
-        return pageProducts.stream()
+        List<ProductResponseDto> content = products.subList(fromIndex, toIndex)
+                .stream()
                 .map(productMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
+
 
 
     private Comparator<Product> getProductSortComparator(String sortBy, String sortDirection) {

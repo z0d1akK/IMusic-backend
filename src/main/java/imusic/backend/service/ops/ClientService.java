@@ -1,6 +1,7 @@
 package imusic.backend.service.ops;
 
 import imusic.backend.dto.create.ops.ClientCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.update.ops.ClientUpdateDto;
 import imusic.backend.dto.request.ops.ClientRequestDto;
 import imusic.backend.dto.response.ops.ClientResponseDto;
@@ -14,5 +15,5 @@ public interface ClientService {
     ClientResponseDto createClient(ClientCreateDto dto);
     ClientResponseDto updateClient(Long id, ClientUpdateDto dto);
     void deleteClient(Long id);
-    List<ClientResponseDto> getClientsWithFilters(ClientRequestDto request);
+    PageResponseDto<ClientResponseDto> getPagedClients(ClientRequestDto request);
 }

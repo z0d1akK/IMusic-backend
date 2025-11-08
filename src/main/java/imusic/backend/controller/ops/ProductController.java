@@ -2,6 +2,7 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.create.ops.ProductCreateDto;
 import imusic.backend.dto.request.ops.ProductRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
 import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
 import imusic.backend.dto.response.ops.ProductResponseDto;
@@ -28,8 +29,8 @@ public class ProductController {
     }
 
     @PostMapping("/paged")
-    public ResponseEntity<List<ProductResponseDto>> filterProducts(@RequestBody ProductRequestDto request) {
-        return ResponseEntity.ok(productService.getProductsWithFilters(request));
+    public ResponseEntity<PageResponseDto<ProductResponseDto>> getPagedProducts(@RequestBody ProductRequestDto request) {
+        return ResponseEntity.ok(productService.getPagedProducts(request));
     }
 
     @GetMapping("/{id}")

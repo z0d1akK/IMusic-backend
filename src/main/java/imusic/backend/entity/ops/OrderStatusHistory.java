@@ -38,6 +38,8 @@ public class OrderStatusHistory implements Serializable {
     @Column(name = "changed_at")
     private LocalDateTime changedAt;
 
-    @Column(name = "comment", columnDefinition = "text")
-    private String comment;
+    @PrePersist
+    public void prePersist() {
+        this.changedAt = LocalDateTime.now();
+    }
 }

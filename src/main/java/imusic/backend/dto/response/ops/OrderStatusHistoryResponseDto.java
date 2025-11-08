@@ -23,7 +23,6 @@ public class OrderStatusHistoryResponseDto {
     private Long changedById;
     private String changedByName;
     private LocalDateTime changedAt;
-    private String comment;
 }
 
 

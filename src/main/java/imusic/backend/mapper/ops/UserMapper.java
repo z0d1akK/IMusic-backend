@@ -21,14 +21,12 @@ public interface UserMapper {
     @Mapping(source = "blocked", target = "isBlocked")
     @Mapping(source = "deleted", target = "isDeleted")
     @Mapping(source = "updatedAt", target = "updatedAt")
-    @Mapping(source = "lastLoginAt", target = "lastLoginAt")
     UserResponseDto toResponse(User user);
 
     @Mapping(target = "role", expression = "java(roleResolver.resolve(dto.getRoleId()))")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "lastLoginAt", ignore = true)
     User toEntity(UserCreateDto dto,
                   @Context RoleResolver roleResolver,
                   @Context UserStatusResolver userStatusResolver);
@@ -38,7 +36,6 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "lastLoginAt", ignore = true)
     void updateEntity(UserUpdateDto dto,
                       @Context RoleResolver roleResolver,
                       @Context UserStatusResolver userStatusResolver,
@@ -55,7 +52,6 @@ public interface UserMapper {
     @Mapping(target = "isDeleted", source = "dto.isDeleted")
     @Mapping(target = "createdAt", source = "dto.createdAt")
     @Mapping(target = "updatedAt", source = "dto.updatedAt")
-    @Mapping(target = "lastLoginAt", source = "dto.lastLoginAt")
     User responseToEntity(UserResponseDto dto,
                           @Context RoleResolver roleResolver,
                           @Context UserStatusResolver userStatusResolver);

@@ -2,6 +2,7 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.request.ops.ClientRequestDto;
 import imusic.backend.dto.create.ops.ClientCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.update.ops.ClientUpdateDto;
 import imusic.backend.dto.response.ops.ClientResponseDto;
 import imusic.backend.entity.ops.User;
@@ -46,8 +47,8 @@ public class ClientController {
         return ResponseEntity.ok(clientDTO);
     }
     @PostMapping("/paged")
-    public ResponseEntity<List<ClientResponseDto>> getClientsWithFilters(@RequestBody ClientRequestDto request) {
-        return ResponseEntity.ok(clientService.getClientsWithFilters(request));
+    public ResponseEntity<PageResponseDto<ClientResponseDto>> getPagedClients(@RequestBody ClientRequestDto request) {
+        return ResponseEntity.ok(clientService.getPagedClients(request));
     }
 
     @PostMapping

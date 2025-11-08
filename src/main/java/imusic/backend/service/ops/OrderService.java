@@ -2,6 +2,7 @@ package imusic.backend.service.ops;
 
 import imusic.backend.dto.create.ops.OrderCreateDto;
 import imusic.backend.dto.request.ops.OrderRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.OrderResponseDto;
 import imusic.backend.dto.update.ops.OrderUpdateDto;
 
@@ -14,5 +15,5 @@ public interface OrderService {
     OrderResponseDto getById(Long id);
     List<OrderResponseDto> getOrdersByClientId(Long clientId);
     List<OrderResponseDto> getAll();
-    List<OrderResponseDto> getOrdersWithFilters(OrderRequestDto dto);
+    PageResponseDto<OrderResponseDto> getPagedOrders(OrderRequestDto request);
 }

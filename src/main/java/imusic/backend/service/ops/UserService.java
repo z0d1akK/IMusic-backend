@@ -3,6 +3,7 @@ package imusic.backend.service.ops;
 import imusic.backend.dto.auth.ChangeLoginRequest;
 import imusic.backend.dto.auth.ChangePasswordRequest;
 import imusic.backend.dto.request.ops.UserRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.UserResponseDto;
 import imusic.backend.dto.update.ops.UserUpdateDto;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,5 +23,5 @@ public interface UserService {
     void changeLogin(Long id, ChangeLoginRequest request);
     void uploadAvatar(Long id, MultipartFile file);
     void deleteUser(Long id);
-    List<UserResponseDto> getUsersWithFilters(UserRequestDto request);
+    PageResponseDto<UserResponseDto> getPagedUsers(UserRequestDto request);
 }

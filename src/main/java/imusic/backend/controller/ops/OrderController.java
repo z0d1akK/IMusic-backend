@@ -2,6 +2,7 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.create.ops.OrderCreateDto;
 import imusic.backend.dto.request.ops.OrderRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.OrderResponseDto;
 import imusic.backend.dto.update.ops.OrderUpdateDto;
 import imusic.backend.service.ops.OrderService;
@@ -21,8 +22,8 @@ public class OrderController {
 
     @PostMapping("/paged")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<List<OrderResponseDto>> getOrdersWithFilters(@RequestBody OrderRequestDto request) {
-        return ResponseEntity.ok(orderService.getOrdersWithFilters(request));
+    public ResponseEntity<PageResponseDto<OrderResponseDto>> getPagedOrders(@RequestBody OrderRequestDto request) {
+        return ResponseEntity.ok(orderService.getPagedOrders(request));
     }
 
     @GetMapping("/{id}")

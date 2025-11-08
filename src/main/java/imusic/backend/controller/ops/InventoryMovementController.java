@@ -2,6 +2,7 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.create.ops.InventoryMovementCreateDto;
 import imusic.backend.dto.request.ops.InventoryMovementRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.InventoryMovementResponseDto;
 import imusic.backend.dto.update.ops.InventoryMovementUpdateDto;
 import imusic.backend.service.ops.InventoryMovementService;
@@ -26,8 +27,8 @@ public class InventoryMovementController {
     }
 
     @PostMapping("/paged")
-    public ResponseEntity<List<InventoryMovementResponseDto>> filterProducts(@RequestBody InventoryMovementRequestDto request) {
-        return ResponseEntity.ok(movementService.getMovementsWithFilters(request));
+    public ResponseEntity<PageResponseDto<InventoryMovementResponseDto>> getPagedInventoryMovements(@RequestBody InventoryMovementRequestDto request) {
+        return ResponseEntity.ok(movementService.getPagedMovements(request));
     }
 
     @GetMapping("/{id}")

@@ -36,12 +36,25 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/uploads/**", "/api/products/paged",
                                 "/api/ref/product-categories", "/api/ref/product-units","/api/products/*",
                                 "/api/products/*/attributes-with-values").permitAll()
-                        .requestMatchers("/api/clients/profile").hasRole("CLIENT")
-                        .requestMatchers("/api/users/clients/available","/api/users/by-role/", "/api/users/clients",
-                                "/api/clients/**", "/api/products/**","/api/inventory-movements/**",
-                                "/api/product-attributes/**","/api/category-attributes/**",
-                                "/api/ref/*").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/api/ref/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/users/*/change-login", "/api/users/*",
+                                "/api/users/*/change-password", "/api/users/*/profile",
+                                "/api/users/*/avatar","/api/users/by-role/*", "/api/orders/paged",
+                                "/api/orders","/api/orders/*").hasAnyRole("ADMIN", "CLIENT", "MANAGER")
+
+                        .requestMatchers("/api/ref/task-statuses", "/api/clients",
+                                "/api/orders/all","/api/orders/by-client",
+                                "/api/order-status-history","/api/ref/order-statuses",
+                                "/api/clients/paged","/api/users/clients/available","/api/users/paged", "/api/statistics/**").hasAnyRole("ADMIN","MANAGER")
+
+                        .requestMatchers("/api/clients/profile", "/api/cart/**").hasRole("CLIENT")
+
+                        .requestMatchers("/api/ref/**","/api/clients/**", "/api/products/**","/api/category-attributes/**",
+                                "/api/product-attributes/**", "/api/inventory-movements/**","/api/orders/**",
+                                "/api/users/paged", "/api/statistics/**").hasAnyRole("ADMIN", "MANAGER")
+
+                        .requestMatchers("/api/users/clients/*").hasRole("MANAGER")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)
@@ -50,5 +63,6 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
 
 

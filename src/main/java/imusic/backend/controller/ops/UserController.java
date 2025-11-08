@@ -2,7 +2,10 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.auth.ChangeLoginRequest;
 import imusic.backend.dto.auth.ChangePasswordRequest;
+import imusic.backend.dto.request.ops.ProductRequestDto;
 import imusic.backend.dto.request.ops.UserRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
+import imusic.backend.dto.response.ops.ProductResponseDto;
 import imusic.backend.dto.update.ops.UserUpdateDto;
 import imusic.backend.dto.response.ops.UserResponseDto;
 import imusic.backend.service.ops.UserService;
@@ -32,8 +35,8 @@ public class UserController {
     }
 
     @PostMapping("/paged")
-    public ResponseEntity<List<UserResponseDto>> getUsersWithFilters(@RequestBody UserRequestDto request) {
-        return ResponseEntity.ok(userService.getUsersWithFilters(request));
+    public ResponseEntity<PageResponseDto<UserResponseDto>> getPagedUsers(@RequestBody UserRequestDto request) {
+        return ResponseEntity.ok(userService.getPagedUsers(request));
     }
 
     @GetMapping("/clients")

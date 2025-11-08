@@ -1,5 +1,6 @@
 package imusic.backend.service.impl.ops;
 
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.mapper.ops.UserMapper;
 import imusic.backend.mapper.resolver.ops.UserResolver;
 import imusic.backend.mapper.resolver.ref.RoleResolver;
@@ -106,7 +107,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<ClientResponseDto> getClientsWithFilters(ClientRequestDto request) {
+    public PageResponseDto<ClientResponseDto> getPagedClients(ClientRequestDto request) {
         List<Client> clients = clientRepository.findAll();
 
         if (request.getName() != null && !request.getName().isBlank()) {
@@ -136,12 +137,18 @@ public class ClientServiceImpl implements ClientService {
 
         clients.sort(getClientSortComparator(request.getSortBy(), request.getSortDirection()));
 
-        int fromIndex = Math.max(0, request.getPage() * request.getSize());
-        int toIndex = Math.min(fromIndex + request.getSize(), clients.size());
+        int totalElements = clients.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
-        return clients.subList(fromIndex, toIndex).stream()
+        int fromIndex = Math.max(0, request.getPage() * request.getSize());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
+
+        List<ClientResponseDto> content = clients.subList(fromIndex, toIndex)
+                .stream()
                 .map(clientMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
 
     private Comparator<Client> getClientSortComparator(String sortBy, String sortDirection) {

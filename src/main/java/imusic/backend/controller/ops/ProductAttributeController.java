@@ -2,7 +2,10 @@ package imusic.backend.controller.ops;
 
 import imusic.backend.dto.create.ops.ProductAttributeCreateDto;
 import imusic.backend.dto.request.ops.ProductAttributeRequestDto;
+import imusic.backend.dto.request.ops.ProductRequestDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
+import imusic.backend.dto.response.ops.ProductResponseDto;
 import imusic.backend.dto.update.ops.ProductAttributeUpdateDto;
 import imusic.backend.service.ops.ProductAttributeService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +28,8 @@ public class ProductAttributeController {
     }
 
     @PostMapping("/paged")
-    public ResponseEntity<List<ProductAttributeResponseDto>> filter(@RequestBody ProductAttributeRequestDto request) {
-        return ResponseEntity.ok(service.getAttributesWithFilters(request));
+    public ResponseEntity<PageResponseDto<ProductAttributeResponseDto>> getPagedAttributes(@RequestBody ProductAttributeRequestDto request) {
+        return ResponseEntity.ok(service.getPagedAttributes(request));
     }
 
     @GetMapping("/{id}")

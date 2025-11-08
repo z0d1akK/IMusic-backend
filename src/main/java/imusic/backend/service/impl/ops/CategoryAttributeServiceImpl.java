@@ -8,6 +8,7 @@ import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.CategoryAttributeMapper;
 import imusic.backend.mapper.resolver.ref.ProductCategoryResolver;
 import imusic.backend.repository.ops.CategoryAttributeRepository;
+import imusic.backend.repository.ops.ProductAttributeRepository;
 import imusic.backend.service.ops.CategoryAttributeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,6 +27,7 @@ public class CategoryAttributeServiceImpl implements CategoryAttributeService {
 
     private final CategoryAttributeRepository categoryAttributeRepository;
     private final CategoryAttributeMapper categoryAttributeMapper;
+    private final ProductAttributeRepository productAttributeRepository;
     private final ProductCategoryResolver productCategoryResolver;
 
     @Override
@@ -75,6 +77,7 @@ public class CategoryAttributeServiceImpl implements CategoryAttributeService {
     public void delete(Long id) {
         CategoryAttribute attribute = categoryAttributeRepository.findById(id)
                 .orElseThrow(() -> new AppException("Атрибут категории не найден, ID: " + id));
+        productAttributeRepository.deleteByCategoryAttributeId(id);
         categoryAttributeRepository.delete(attribute);
     }
 }

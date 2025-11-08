@@ -1,6 +1,7 @@
 package imusic.backend.service.impl.ops;
 
 import imusic.backend.dto.create.ops.ProductAttributeCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.update.ops.ProductAttributeUpdateDto;
 import imusic.backend.dto.request.ops.ProductAttributeRequestDto;
 import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
@@ -83,7 +84,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     }
 
     @Override
-    public List<ProductAttributeResponseDto> getAttributesWithFilters(ProductAttributeRequestDto request) {
+    public PageResponseDto<ProductAttributeResponseDto> getPagedAttributes(ProductAttributeRequestDto request) {
         List<ProductAttribute> attributes = attributeRepository.findAll();
 
         if (request.getProductId() != null) {
@@ -106,12 +107,18 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
 
         attributes.sort(getAttributeSortComparator(request.getSortBy(), request.getSortDirection()));
 
-        int fromIndex = Math.max(0, request.getPage() * request.getSize());
-        int toIndex = Math.min(fromIndex + request.getSize(), attributes.size());
+        int totalElements = attributes.size();
+        int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
-        return attributes.subList(fromIndex, toIndex).stream()
+        int fromIndex = Math.max(0, request.getPage() * request.getSize());
+        int toIndex = Math.min(fromIndex + request.getSize(), totalElements);
+
+        List<ProductAttributeResponseDto> content = attributes.subList(fromIndex, toIndex)
+                .stream()
                 .map(attributeMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
 
     private Comparator<ProductAttribute> getAttributeSortComparator(String sortBy, String sortDirection) {

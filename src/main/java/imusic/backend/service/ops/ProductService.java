@@ -1,6 +1,7 @@
 package imusic.backend.service.ops;
 
 import imusic.backend.dto.create.ops.ProductCreateDto;
+import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
 import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
 import imusic.backend.dto.update.ops.ProductUpdateDto;
@@ -16,12 +17,8 @@ public interface ProductService {
     ProductResponseDto create(ProductCreateDto dto);
     ProductResponseDto update(Long id, ProductUpdateDto dto);
     void delete(Long id);
-
     void uploadProductImage(Long id, MultipartFile file);
-
     List<ProductAttributeResponseDto> getAttributesByProductId(Long productId);
-
     List<CategoryAttributeResponseDto> getCategoryAttributesWithValues(Long productId);
-
-    List<ProductResponseDto> getProductsWithFilters(ProductRequestDto request);
+    PageResponseDto<ProductResponseDto> getPagedProducts(ProductRequestDto request);
 }

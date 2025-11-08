@@ -21,7 +21,7 @@ public interface CartMapper {
                   @Context ClientResolver clientResolver);
 
     @Mapping(target = "client", expression = "java(dto.getClientId() != null ? clientResolver.resolve(dto.getClientId()) : entity.getClient())")
-    @Mapping(target = "items", ignore = true) // обработка items идёт отдельно (в сервисе)
+    @Mapping(target = "items", ignore = true)
     void updateEntity(CartUpdateDto dto,
                       @Context ClientResolver clientResolver,
                       @MappingTarget Cart entity);
