@@ -16,7 +16,7 @@ public class InventoryMovementType {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // INCOME, OUTCOME, ADJUSTMENT, RETURN_TO_STOCK, RESERVE_IN_CART
+    private String code;
 
 
     @Column(nullable = false)

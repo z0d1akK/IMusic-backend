@@ -38,7 +38,6 @@ public class CartServiceImpl implements CartService {
     private final InventoryMovementService inventoryMovementService;
     private final RoleResolver roleResolver;
     private final UserStatusResolver userStatusResolver;
-    private final OrderItemRepository orderItemRepository;
 
     @Override
     public CartResponseDto getByClientId(Long clientId) {
@@ -148,17 +147,12 @@ public class CartServiceImpl implements CartService {
         Product product = item.getProduct();
         int quantity = item.getQuantity();
 
-        if (orderItemRepository.findByProductId(product.getId()).isEmpty()){
-
             product.setStockQuantity(product.getStockQuantity() + quantity);
             productRepository.save(product);
 
             inventoryMovementService.createInventoryMovement(product, quantity, "RETURN_TO_STOCK", "Удаление товара из корзины пользователя " + currentUser.getUsername());
 
             cartItemRepository.delete(item);
-        } else {
-            cartItemRepository.delete(item);
-        }
     }
 
     @Override
@@ -176,13 +170,10 @@ public class CartServiceImpl implements CartService {
             Product product = item.getProduct();
             int quantity = item.getQuantity();
 
-            if (orderItemRepository.findByProductId(product.getId()).isEmpty()){
-
                 product.setStockQuantity(product.getStockQuantity() + quantity);
                 productRepository.save(product);
 
                 inventoryMovementService.createInventoryMovement(product, quantity, "RETURN_TO_STOCK", "Очистка корзины пользователя " + currentUser.getUsername());
-            }
         }
         cartItemRepository.deleteAll(items);
     }

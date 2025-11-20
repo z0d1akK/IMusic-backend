@@ -19,7 +19,6 @@ public class ClientResponseDto {
     private String address;
     private String inn;
     private String contactPerson;
-    private String documentsPath;
     private Long userId;
     private String username;
     private String statusCode;

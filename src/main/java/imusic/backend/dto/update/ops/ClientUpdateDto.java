@@ -16,6 +16,5 @@ public class ClientUpdateDto {
     private String address;
     private String inn;
     private String contactPerson;
-    private String documentsPath;
 }
 

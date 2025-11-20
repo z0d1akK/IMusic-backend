@@ -16,7 +16,7 @@ public class OrderStatus {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // NEW, PAID, IN_PROGRESS, SHIPPED, DELIVERED, CANCELED, RETURNED
+    private String code;
 
     @Column(nullable = false)
     private String name;

@@ -9,10 +9,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemCreateDto {
-    /**
-     * Если в эндпоинте используете путь вида /carts/{cartId}/items,
-     * можно игнорировать это поле и брать cartId из PathVariable.
-     */
     @NotNull
     private Long cartId;
     @NotNull

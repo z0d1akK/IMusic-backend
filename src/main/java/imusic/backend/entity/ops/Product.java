@@ -56,6 +56,7 @@ public class Product implements Serializable {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        this.minStockLevel = 10;
     }
 
     @PreUpdate

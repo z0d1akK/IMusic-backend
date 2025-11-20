@@ -16,7 +16,7 @@ public class ProductUnit {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String code; // METER, PCS, SET, PAIR
+    private String code;
 
     @Column(nullable = false)
     private String name;

@@ -189,7 +189,7 @@ public class InventoryMovementServiceImpl implements InventoryMovementService {
         Product product = movement.getProduct();
 
         switch (typeCode) {
-            case "INCOME" -> {
+            case "INCOME", "RETURNED" -> {
                 product.setWarehouseQuantity(product.getWarehouseQuantity() + quantity);
                 product.setStockQuantity(product.getStockQuantity() + quantity);
             }
@@ -223,10 +223,16 @@ public class InventoryMovementServiceImpl implements InventoryMovementService {
         Product product = movement.getProduct();
 
         switch (typeCode) {
-            case "INCOME" -> product.setWarehouseQuantity(product.getWarehouseQuantity() - quantity);
-            case "OUTCOME" -> product.setWarehouseQuantity(product.getWarehouseQuantity() + quantity);
+            case "INCOME" -> {
+                product.setStockQuantity(product.getStockQuantity() - quantity);
+                product.setWarehouseQuantity(product.getWarehouseQuantity() - quantity);
+            }
+            case "OUTCOME" -> {
+                product.setStockQuantity(product.getStockQuantity() + quantity);
+                product.setWarehouseQuantity(product.getWarehouseQuantity() + quantity);
+            }
             case "RESERVE_IN_CART" -> product.setStockQuantity(product.getStockQuantity() + quantity);
-            case "RETURN_TO_STOCK", "CANCELLED" -> product.setStockQuantity(product.getStockQuantity() - quantity);
+            case "RETURN_TO_STOCK" -> product.setStockQuantity(product.getStockQuantity() - quantity);
             case "RETURNED" -> {
                 product.setWarehouseQuantity(product.getWarehouseQuantity() - quantity);
                 product.setStockQuantity(product.getStockQuantity() - quantity);

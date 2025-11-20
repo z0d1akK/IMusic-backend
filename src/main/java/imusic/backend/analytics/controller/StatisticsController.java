@@ -1,0 +1,106 @@
+package imusic.backend.analytics.controller;
+
+import imusic.backend.analytics.dto.*;
+import imusic.backend.analytics.service.StatisticsService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/statistics")
+@RequiredArgsConstructor
+public class StatisticsController {
+
+    private final StatisticsService statisticsService;
+
+    @GetMapping("/overview")
+    public ResponseEntity<OverviewStatsDto> getOverviewStats(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(statisticsService.getOverviewStats(startDate, endDate));
+    }
+
+    @GetMapping("/sales-trends")
+    public ResponseEntity<List<SalesTrendDto>> getSalesTrends(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "month") String groupBy
+    ) {
+        return ResponseEntity.ok(statisticsService.getSalesTrends(startDate, endDate, groupBy));
+    }
+
+    @GetMapping("/order-status")
+    public ResponseEntity<List<OrderStatusStatsDto>> getOrderStatusStats() {
+        return ResponseEntity.ok(statisticsService.getOrderStatusStats());
+    }
+
+    @GetMapping("/top-clients")
+    public ResponseEntity<List<TopClientDto>> getTopClients(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(statisticsService.getTopClients(limit));
+    }
+
+    @GetMapping("/top-products")
+    public ResponseEntity<List<TopProductDto>> getTopProducts(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(statisticsService.getTopProducts(limit));
+    }
+
+    @GetMapping("/inventory-movements")
+    public ResponseEntity<List<InventoryMovementDto>> getInventoryMovements(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(statisticsService.getInventoryMovements(startDate, endDate));
+    }
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<LowStockProductDto>> getLowStockProducts() {
+        return ResponseEntity.ok(statisticsService.getLowStockProducts());
+    }
+
+    @GetMapping("/manager-rating")
+    public ResponseEntity<List<ManagerRatingDto>> getManagerRatings() {
+        return ResponseEntity.ok(statisticsService.getManagerRatings());
+    }
+
+    @GetMapping("/active-users")
+    public ResponseEntity<Long> getActiveUsersCount(@RequestParam(defaultValue = "30") int lastDays) {
+        return ResponseEntity.ok(statisticsService.getActiveUsersCount(lastDays));
+    }
+
+    @GetMapping("/manager/{managerId}/sales-trends")
+    public ResponseEntity<List<SalesTrendDto>> getManagerSalesTrends(
+            @PathVariable Long managerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(statisticsService.getManagerSalesTrend(managerId, startDate, endDate));
+    }
+
+    @GetMapping("/manager/{managerId}/top-clients")
+    public ResponseEntity<List<TopClientDto>> getManagerTopClients(
+            @PathVariable Long managerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(statisticsService.getManagerTopClients(managerId, startDate, endDate, limit));
+    }
+
+
+    @GetMapping("/manager/{managerId}/top-products")
+    public ResponseEntity<List<TopProductDto>> getManagerTopProducts(
+            @PathVariable Long managerId,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(statisticsService.getManagerTopProducts(managerId, limit));
+    }
+}

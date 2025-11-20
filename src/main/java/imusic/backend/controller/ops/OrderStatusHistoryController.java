@@ -24,17 +24,6 @@ public class OrderStatusHistoryController {
         return ResponseEntity.ok(orderStatusHistoryService.getHistoryByOrderId(orderId));
     }
 
-//    @PostMapping("/filter")
-//    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-//    public ResponseEntity<List<OrderStatusHistoryResponseDto>> getFilteredHistory(
-//            @RequestBody @Validated OrderStatusHistoryRequestDto request
-//    ) {
-//        List<OrderStatusHistoryResponseDto> response = orderStatusHistoryService.getHistoryByOrderId(
-//                request.getOrderId()
-//        );
-//        return ResponseEntity.ok(response);
-//    }
-
     @DeleteMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteHistoryByOrderId(@PathVariable Long orderId) {
