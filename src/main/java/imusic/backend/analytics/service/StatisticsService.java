@@ -162,8 +162,13 @@ public class StatisticsService {
                 .collect(Collectors.toList());
     }
 
-    public List<TopProductDto> getManagerTopProducts(Long managerId, int limit) {
-        return repo.fetchManagerTopProducts(managerId, limit)
+    public List<TopProductDto> getManagerTopProducts(
+            Long managerId, LocalDate start, LocalDate end, int limit) {
+
+        start = start != null ? start : LocalDate.of(2000, 1, 1);
+        end = end != null ? end : LocalDate.now();
+
+        return repo.fetchManagerTopProducts(managerId, start, end, limit)
                 .stream()
                 .map(m -> {
                     TopProductDto dto = new TopProductDto();
@@ -174,6 +179,5 @@ public class StatisticsService {
                 })
                 .collect(Collectors.toList());
     }
-
 
 }

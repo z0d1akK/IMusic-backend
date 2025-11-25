@@ -45,13 +45,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/ref/task-statuses", "/api/clients",
                                 "/api/orders/all","/api/orders/by-client",
                                 "/api/order-status-history","/api/ref/order-statuses",
-                                "/api/clients/paged","/api/users/clients/available","/api/users/paged", "/api/statistics/**").hasAnyRole("ADMIN","MANAGER")
+                                "/api/clients/paged","/api/users/clients/available","/api/users/paged").hasAnyRole("ADMIN","MANAGER")
 
                         .requestMatchers("/api/clients/profile", "/api/cart/**").hasRole("CLIENT")
 
                         .requestMatchers("/api/ref/**","/api/clients/**", "/api/products/**","/api/category-attributes/**",
                                 "/api/product-attributes/**", "/api/inventory-movements/**","/api/orders/**",
-                                "/api/users/paged", "/api/statistics/**").hasAnyRole("ADMIN", "MANAGER")
+                                "/api/users/paged", "/api/statistics/**", "/api/reports/**").hasAnyRole("ADMIN", "MANAGER")
 
                         .requestMatchers("/api/users/clients/*").hasRole("MANAGER")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")

@@ -145,8 +145,6 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-
-
     @Query(value = """
     SELECT 
         c.company_name AS client_name,
@@ -168,8 +166,6 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
             @Param("limit") int limit
     );
 
-
-
     @Query(value = """
     SELECT 
         p.name AS product_name,
@@ -179,13 +175,15 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
     JOIN ops.order_items oi ON oi.order_id = o.id
     JOIN ops.products p ON p.id = oi.product_id
     WHERE o.created_by = :managerId
+      AND o.created_at BETWEEN :startDate AND :endDate
     GROUP BY p.id
-    ORDER BY total_sold DESC
-    LIMIT :limit;
+    ORDER BY total_revenue DESC
+    LIMIT :limit
 """, nativeQuery = true)
     List<Map<String, Object>> fetchManagerTopProducts(
             @Param("managerId") Long managerId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             @Param("limit") int limit
     );
-
 }
