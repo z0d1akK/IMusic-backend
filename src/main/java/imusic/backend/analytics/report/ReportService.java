@@ -13,8 +13,8 @@ public class ReportService {
     private final StatisticsService statisticsService;
     private final PdfReportGenerator pdf;
 
-    public byte[] managerSalesReport(Long managerId, LocalDate start, LocalDate end) {
-        var data = statisticsService.getManagerSalesTrend(managerId, start, end);
+    public byte[] managerSalesReport(Long managerId, LocalDate start, LocalDate end, String groupBy) {
+        var data = statisticsService.getManagerSalesTrend(managerId, start, end, groupBy);
         return pdf.salesTrendReport(data, "Отчёт по продажам менеджера");
     }
 
@@ -28,8 +28,8 @@ public class ReportService {
         return pdf.topProductsReport(data, "Топ продуктов менеджера");
     }
 
-    public byte[] adminSalesReport(LocalDate start, LocalDate end) {
-        var data = statisticsService.getSalesTrends(start, end, "month");
+    public byte[] adminSalesReport(LocalDate start, LocalDate end, String groupBy) {
+        var data = statisticsService.getSalesTrends(start, end, groupBy);
         return pdf.adminSalesReport(data, "Общий отчёт по продажам компании");
     }
 
