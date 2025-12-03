@@ -31,18 +31,24 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
     Map<String, Object> fetchOverviewStats();
 
     @Query(value = """
-    SELECT TO_CHAR(o.created_at, 'YYYY-MM-DD') AS period,
-           COALESCE(SUM(oi.total_price), 0) AS total_revenue
+    SELECT 
+        CASE
+            WHEN :groupBy = 'day' THEN TO_CHAR(o.created_at, 'YYYY-MM-DD')
+            WHEN :groupBy = 'year' THEN TO_CHAR(o.created_at, 'YYYY')
+            ELSE TO_CHAR(o.created_at, 'YYYY-MM')
+        END AS period,
+        COALESCE(SUM(oi.total_price), 0) AS total_revenue
     FROM ops.orders o
     JOIN ops.order_items oi ON oi.order_id = o.id
-    WHERE o.created_at >= COALESCE(:startDate, o.created_at)
-      AND o.created_at <= COALESCE(:endDate, o.created_at)
-    GROUP BY TO_CHAR(o.created_at, 'YYYY-MM-DD')
-    ORDER BY period
+    WHERE o.created_at >= :startDate
+      AND o.created_at <= :endDate
+    GROUP BY period
+    ORDER BY period;
 """, nativeQuery = true)
     List<Map<String, Object>> fetchSalesTrends(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("groupBy") String groupBy
     );
 
 
@@ -70,6 +76,7 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
 
     @Query(value = """
         SELECT p.name AS product_name,
+               p.id AS product_id,
                COALESCE(SUM(oi.quantity), 0) AS total_sold,
                COALESCE(SUM(oi.total_price), 0) AS total_revenue
         FROM ops.products p
@@ -130,20 +137,119 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
 
     @Query(value = """
     SELECT 
-        TO_CHAR(o.created_at, 'YYYY-MM-DD') AS period,
+        CASE
+            WHEN :groupBy = 'day' THEN TO_CHAR(o.created_at, 'YYYY-MM-DD')
+            WHEN :groupBy = 'year' THEN TO_CHAR(o.created_at, 'YYYY')
+            ELSE TO_CHAR(o.created_at, 'YYYY-MM')
+        END AS period,
+        COALESCE(SUM(oi.quantity), 0) AS total_sold,
         COALESCE(SUM(oi.total_price), 0) AS total_revenue
     FROM ops.orders o
     JOIN ops.order_items oi ON oi.order_id = o.id
-    WHERE o.created_by = :managerId
+    WHERE oi.product_id = :productId
+      AND o.created_at BETWEEN :startDate AND :endDate
+    GROUP BY period
+    ORDER BY period;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchProductSeasonality(
+            @Param("productId") Long productId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("groupBy") String groupBy
+    );
+
+
+    @Query(value = """
+    SELECT 
+        CASE
+            WHEN :groupBy = 'day' THEN TO_CHAR(o.created_at, 'YYYY-MM-DD')
+            WHEN :groupBy = 'year' THEN TO_CHAR(o.created_at, 'YYYY')
+            ELSE TO_CHAR(o.created_at, 'YYYY-MM')
+        END AS period,
+        COALESCE(SUM(oi.quantity), 0) AS total_sold,
+        COALESCE(SUM(oi.total_price), 0) AS total_revenue
+    FROM ops.orders o
+    JOIN ops.order_items oi ON oi.order_id = o.id
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE oi.product_id = :productId
+      AND (o.created_by = :managerId OR c.created_by = :managerId)
+      AND o.created_at BETWEEN :startDate AND :endDate
+    GROUP BY period
+    ORDER BY period;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchManagerProductSeasonality(
+            @Param("managerId") Long managerId,
+            @Param("productId") Long productId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("groupBy") String groupBy
+    );
+
+
+    @Query(value = """
+    SELECT 
+        pc.name AS category,
+        COALESCE(SUM(oi.quantity), 0) AS total_sold,
+        COALESCE(SUM(oi.total_price), 0) AS total_revenue
+    FROM ops.order_items oi
+    JOIN ops.products p ON p.id = oi.product_id
+    JOIN ref.product_categories pc ON pc.id = p.category_id
+    JOIN ops.orders o ON o.id = oi.order_id
+    WHERE o.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND o.created_at <= COALESCE(:endDate, NOW()::timestamp)
+    GROUP BY pc.id, pc.name
+    ORDER BY total_revenue DESC;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchCategorySales(
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end
+    );
+
+    @Query(value = """
+    SELECT 
+        pc.name AS category,
+        COALESCE(SUM(oi.quantity), 0) AS total_sold,
+        COALESCE(SUM(oi.total_price), 0) AS total_revenue
+    FROM ops.order_items oi
+    JOIN ops.products p ON p.id = oi.product_id
+    JOIN ref.product_categories pc ON pc.id = p.category_id
+    JOIN ops.orders o ON o.id = oi.order_id
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE (o.created_by = :managerId OR c.created_by = :managerId)
+      AND o.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND o.created_at <= COALESCE(:endDate, NOW()::timestamp)
+    GROUP BY pc.id, pc.name
+    ORDER BY total_revenue DESC;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchManagerCategorySales(
+            @Param("managerId") Long managerId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end
+    );
+
+    @Query(value = """
+    SELECT 
+        CASE
+            WHEN :groupBy = 'day' THEN TO_CHAR(o.created_at, 'YYYY-MM-DD')
+            WHEN :groupBy = 'year' THEN TO_CHAR(o.created_at, 'YYYY')
+            ELSE TO_CHAR(o.created_at, 'YYYY-MM')
+        END AS period,
+        COALESCE(SUM(oi.total_price), 0) AS total_revenue
+    FROM ops.orders o
+    JOIN ops.order_items oi ON oi.order_id = o.id
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE (o.created_by = :managerId OR c.created_by = :managerId)
       AND o.created_at BETWEEN :startDate AND :endDate
     GROUP BY period
     ORDER BY period;
 """, nativeQuery = true)
     List<Map<String, Object>> fetchManagerSalesTrend(
             @Param("managerId") Long managerId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("groupBy") String groupBy
     );
+
 
     @Query(value = """
     SELECT 
@@ -152,7 +258,7 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
     FROM ops.orders o
     JOIN ops.clients c ON c.id = o.client_id
     JOIN ops.order_items oi ON oi.order_id = o.id
-    WHERE o.created_by = :managerId
+    WHERE (o.created_by = :managerId OR c.created_by = :managerId)
       AND o.created_at >= :startDate
       AND o.created_at <= :endDate
     GROUP BY c.id
@@ -169,12 +275,14 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
     @Query(value = """
     SELECT 
         p.name AS product_name,
+        p.id AS product_id,
         SUM(oi.quantity) AS total_sold,
         SUM(oi.total_price) AS total_revenue
     FROM ops.orders o
     JOIN ops.order_items oi ON oi.order_id = o.id
     JOIN ops.products p ON p.id = oi.product_id
-    WHERE o.created_by = :managerId
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE (o.created_by = :managerId OR c.created_by = :managerId)
       AND o.created_at BETWEEN :startDate AND :endDate
     GROUP BY p.id
     ORDER BY total_revenue DESC

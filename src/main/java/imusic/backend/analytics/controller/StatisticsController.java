@@ -86,14 +86,49 @@ public class StatisticsController {
         return ResponseEntity.ok(statisticsService.getActiveUsersCount(lastDays));
     }
 
+    @GetMapping("/product/{productId}/seasonality")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<ProductSeasonalityDto>> getProductSeasonality(
+            @PathVariable Long productId,
+            @RequestParam(required = false) Long managerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "month") String groupBy
+    ) {
+        if (managerId != null)
+            return ResponseEntity.ok(
+                    statisticsService.getManagerProductSeasonality(managerId, productId, startDate, endDate, groupBy)
+            );
+
+        return ResponseEntity.ok(
+                statisticsService.getProductSeasonality(productId, startDate, endDate, groupBy)
+        );
+    }
+
+    @GetMapping("/category-sales")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<CategorySalesDto>> getCategorySales(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Long managerId
+    ) {
+        if (managerId != null)
+            return ResponseEntity.ok(statisticsService.getManagerCategorySales(managerId, startDate, endDate));
+        else
+            return ResponseEntity.ok(statisticsService.getCategorySales(startDate, endDate));
+    }
+
     @GetMapping("/manager/{managerId}/sales-trends")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<List<SalesTrendDto>> getManagerSalesTrends(
             @PathVariable Long managerId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "month") String groupBy
     ) {
-        return ResponseEntity.ok(statisticsService.getManagerSalesTrend(managerId, startDate, endDate));
+        return ResponseEntity.ok(
+                statisticsService.getManagerSalesTrend(managerId, startDate, endDate, groupBy)
+        );
     }
 
     @GetMapping("/manager/{managerId}/top-clients")
