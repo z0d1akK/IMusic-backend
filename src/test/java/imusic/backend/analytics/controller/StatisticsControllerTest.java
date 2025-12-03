@@ -21,13 +21,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class StatisticsControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @MockBean private JwtService jwtService;
-    @MockBean private StatisticsService service;
+    @MockBean
+    private StatisticsService service;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
-    void testOverviewStats() throws Exception {
+    void testGetOverview() throws Exception {
         OverviewStatsDto dto = new OverviewStatsDto();
         dto.setTotalOrders(10);
         dto.setTotalRevenue(BigDecimal.valueOf(500));
@@ -36,34 +40,37 @@ class StatisticsControllerTest {
 
         mockMvc.perform(get("/api/statistics/overview"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalOrders").value(10));
+                .andExpect(jsonPath("$.totalOrders").value(10))
+                .andExpect(jsonPath("$.totalRevenue").value(500));
     }
 
     @Test
-    void testTopProducts() throws Exception {
-        TopProductDto dto = new TopProductDto();
-        dto.setProductName("Guitar");
-        dto.setTotalSold(5);
-        dto.setTotalRevenue(BigDecimal.valueOf(200));
-
-        when(service.getTopProducts(5)).thenReturn(List.of(dto));
-
-        mockMvc.perform(get("/api/statistics/top-products"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productName").value("Guitar"));
-    }
-
-    @Test
-    void testTopClients() throws Exception {
+    void testGetTopClients() throws Exception {
         TopClientDto dto = new TopClientDto();
         dto.setClientName("John");
         dto.setTotalSpent(BigDecimal.valueOf(300));
 
-        when(service.getTopClients(5)).thenReturn(List.of(dto));
+        when(service.getTopClients(null, null, 5)).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/statistics/top-clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].clientName").value("John"));
+                .andExpect(jsonPath("$[0].clientName").value("John"))
+                .andExpect(jsonPath("$[0].totalSpent").value(300));
+    }
+
+    @Test
+    void testGetManagerTopProductsEndpoint() throws Exception {
+        TopProductDto dto = new TopProductDto();
+        dto.setProductName("Piano");
+        dto.setProductId(10L);
+        dto.setTotalSold(3);
+        dto.setTotalRevenue(BigDecimal.valueOf(500));
+
+        when(service.getManagerTopProducts(2L, null, null, 10)).thenReturn(List.of(dto));
+
+        mockMvc.perform(get("/api/statistics/manager/2/top-products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productName").value("Piano"))
+                .andExpect(jsonPath("$[0].productId").value(10));
     }
 }
-

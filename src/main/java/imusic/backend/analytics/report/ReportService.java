@@ -13,18 +13,18 @@ public class ReportService {
     private final StatisticsService statisticsService;
     private final PdfReportGenerator pdf;
 
-    public byte[] managerSalesReport(Long managerId, LocalDate start, LocalDate end, String groupBy) {
-        var data = statisticsService.getManagerSalesTrend(managerId, start, end, groupBy);
+    public byte[] managerSalesReport(Long managerId, LocalDate start, LocalDate end, String groupBy, int limit) {
+        var data = statisticsService.getManagerSalesTrend(managerId, start, end, groupBy, limit);
         return pdf.salesTrendReport(data, "Отчёт по продажам менеджера");
     }
 
-    public byte[] managerTopClientsReport(Long managerId, LocalDate start, LocalDate end) {
-        var data = statisticsService.getManagerTopClients(managerId, start, end, 10);
+    public byte[] managerTopClientsReport(Long managerId, LocalDate start, LocalDate end, int limit) {
+        var data = statisticsService.getManagerTopClients(managerId, start, end, limit);
         return pdf.topClientsReport(data, "Топ клиентов менеджера");
     }
 
-    public byte[] managerTopProductsReport(Long managerId, LocalDate start, LocalDate end) {
-        var data = statisticsService.getManagerTopProducts(managerId, start, end, 10);
+    public byte[] managerTopProductsReport(Long managerId, LocalDate start, LocalDate end, int limit) {
+        var data = statisticsService.getManagerTopProducts(managerId, start, end, limit);
         return pdf.topProductsReport(data, "Топ продуктов менеджера");
     }
 
@@ -33,13 +33,13 @@ public class ReportService {
         return pdf.adminSalesReport(data, "Общий отчёт по продажам компании");
     }
 
-    public byte[] adminTopManagersReport() {
-        var data = statisticsService.getManagerRatings();
+    public byte[] adminTopManagersReport(LocalDate start, LocalDate end, int limit) {
+        var data = statisticsService.getManagerRatings(start, end, limit);
         return pdf.managerRatingsReport(data, "Топ менеджеров по продажам");
     }
 
-    public byte[] adminTopProductsReport() {
-        var data = statisticsService.getTopProducts(10);
+    public byte[] adminTopProductsReport(LocalDate start, LocalDate end, int limit) {
+        var data = statisticsService.getTopProducts(start, end, limit);
         return pdf.adminTopProductsReport(data, "Топ продуктов компании");
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDate;
 
 @RestController
@@ -20,9 +21,10 @@ public class ReportController {
             @PathVariable Long managerId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam String groupBy
+            @RequestParam String groupBy,
+            @RequestParam(defaultValue = "200") int limit
     ) {
-        byte[] pdf = reportService.managerSalesReport(managerId, startDate, endDate, groupBy);
+        byte[] pdf = reportService.managerSalesReport(managerId, startDate, endDate, groupBy, limit);
         return build("manager_sales_report.pdf", pdf);
     }
 
@@ -30,9 +32,10 @@ public class ReportController {
     public ResponseEntity<byte[]> managerClientsReport(
             @PathVariable Long managerId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int limit
     ) {
-        byte[] pdf = reportService.managerTopClientsReport(managerId, startDate, endDate);
+        byte[] pdf = reportService.managerTopClientsReport(managerId, startDate, endDate, limit);
         return build("manager_top_clients.pdf", pdf);
     }
 
@@ -40,9 +43,10 @@ public class ReportController {
     public ResponseEntity<byte[]> managerProductsReport(
             @PathVariable Long managerId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int limit
     ) {
-        byte[] pdf = reportService.managerTopProductsReport(managerId, startDate, endDate);
+        byte[] pdf = reportService.managerTopProductsReport(managerId, startDate, endDate, limit);
         return build("manager_top_products.pdf", pdf);
     }
 
@@ -57,14 +61,22 @@ public class ReportController {
     }
 
     @GetMapping("/admin/top-managers")
-    public ResponseEntity<byte[]> adminTopManagersReport() {
-        byte[] pdf = reportService.adminTopManagersReport();
+    public ResponseEntity<byte[]> adminTopManagersReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        byte[] pdf = reportService.adminTopManagersReport(startDate, endDate, limit);
         return build("admin_top_managers.pdf", pdf);
     }
 
     @GetMapping("/admin/top-products")
-    public ResponseEntity<byte[]> adminTopProductsReport() {
-        byte[] pdf = reportService.adminTopProductsReport();
+    public ResponseEntity<byte[]> adminTopProductsReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "100") int limit
+    ) {
+        byte[] pdf = reportService.adminTopProductsReport(startDate, endDate, limit);
         return build("admin_top_products.pdf", pdf);
     }
 

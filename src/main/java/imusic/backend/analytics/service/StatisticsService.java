@@ -34,28 +34,39 @@ public class StatisticsService {
         start = normalizeStart(start);
         end = normalizeEnd(end);
 
-        List<SalesTrendDto> list = repo.fetchSalesTrends(start, end, groupBy).stream().map(m -> {
-                    SalesTrendDto dto = new SalesTrendDto();
-                    dto.setPeriod((String) m.get("period"));
+        List<SalesTrendDto> list = repo.fetchSalesTrends(start, end, groupBy)
+                .stream()
+                .map(m -> {
+                    SalesTrendDto dto = new SalesTrendDto(); dto.setPeriod((String) m.get("period"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
                     return dto;
-                }).sorted(Comparator.comparing(SalesTrendDto::getPeriod))
+                })
+                .sorted(Comparator.comparing(SalesTrendDto::getPeriod))
                 .collect(Collectors.toList());
 
         return limitPoints(list, 200);
     }
 
-    public List<OrderStatusStatsDto> getOrderStatusStats() {
-        return repo.fetchOrderStatusStats().stream().map(m -> {
-            OrderStatusStatsDto dto = new OrderStatusStatsDto();
-            dto.setStatus((String) m.get("status"));
-            dto.setCount(getLong(m, "count"));
-            return dto;
-        }).collect(Collectors.toList());
+    public List<OrderStatusStatsDto> getOrderStatusStats(LocalDate start, LocalDate end) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchOrderStatusStats(start, end)
+                .stream()
+                .map(m -> {
+                    OrderStatusStatsDto dto = new OrderStatusStatsDto();
+                    dto.setStatus((String) m.get("status"));
+                    dto.setCount(getLong(m, "count")); return dto;
+                })
+                .collect(Collectors.toList());
     }
 
-    public List<TopClientDto> getTopClients(int limit) {
-        return repo.fetchTopClients(limit).stream()
+    public List<TopClientDto> getTopClients(LocalDate start, LocalDate end, int limit) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchTopClients(start, end, limit)
+                .stream()
                 .map(m -> {
                     TopClientDto dto = new TopClientDto();
                     dto.setClientName((String) m.get("client_name"));
@@ -66,34 +77,46 @@ public class StatisticsService {
                 .collect(Collectors.toList());
     }
 
-    public List<TopProductDto> getTopProducts(int limit) {
-        return repo.fetchTopProducts(limit).stream()
+    public List<TopProductDto> getTopProducts(LocalDate start, LocalDate end, int limit) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchTopProducts(limit, start, end)
+                .stream()
                 .map(m -> {
                     TopProductDto dto = new TopProductDto();
                     dto.setProductName((String) m.get("product_name"));
+                    dto.setProductId(getLong(m, "product_id"));
                     dto.setTotalSold(getLong(m, "total_sold"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
-                    dto.setProductId((Long) m.get("product_id"));
                     return dto;
                 })
                 .sorted(Comparator.comparing(TopProductDto::getTotalRevenue).reversed())
                 .collect(Collectors.toList());
     }
 
-    public List<InventoryMovementDto> getInventoryMovements(LocalDate start, LocalDate end) {
-        return repo.fetchInventoryMovements(start, end).stream().map(m -> {
-            InventoryMovementDto dto = new InventoryMovementDto();
-            dto.setMovementType((String) m.get("movement_type"));
-            dto.setMovementCount(getLong(m, "movement_count"));
-            dto.setTotalQuantity(getLong(m, "total_quantity"));
-            return dto;
-        }).collect(Collectors.toList());
+    public List<InventoryMovementDto> getInventoryMovements(LocalDate start, LocalDate end, int limit) {
+        return repo.fetchInventoryMovements(start, end)
+                .stream()
+                .map(m -> {
+                    InventoryMovementDto dto = new InventoryMovementDto();
+                    dto.setMovementType((String) m.get("movement_type"));
+                    dto.setMovementCount(getLong(m, "movement_count"));
+                    dto.setTotalQuantity(getLong(m, "total_quantity"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
-    public List<LowStockProductDto> getLowStockProducts() {
-        return repo.fetchLowStockProducts().stream()
+    public List<LowStockProductDto> getLowStockProducts(LocalDate start, LocalDate end) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchLowStockProducts(start, end)
+                .stream()
                 .map(m -> {
                     LowStockProductDto dto = new LowStockProductDto();
+                    dto.setProductId(getLong(m, "product_id"));
                     dto.setProductName((String) m.get("product_name"));
                     dto.setStockQuantity(getInt(m, "stock_quantity"));
                     dto.setMinStockLevel(getInt(m, "min_stock_level"));
@@ -103,38 +126,68 @@ public class StatisticsService {
                 .collect(Collectors.toList());
     }
 
-    public List<ManagerRatingDto> getManagerRatings() {
-        return repo.fetchManagerRatings().stream().map(m -> {
-            ManagerRatingDto dto = new ManagerRatingDto();
-            dto.setManagerName((String) m.get("manager_name"));
-            dto.setTotalOrders(getLong(m, "total_orders"));
-            dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
-            return dto;
-        }).collect(Collectors.toList());
+    public List<ManagerRatingDto> getManagerRatings(LocalDate start, LocalDate end, int limit) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchManagerRatings(start, end, limit)
+                .stream()
+                .map(m -> {
+                    ManagerRatingDto dto = new ManagerRatingDto();
+                    dto.setManagerName((String) m.get("manager_name"));
+                    dto.setTotalOrders(getLong(m, "total_orders"));
+                    dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ManagerRatingDto::getTotalRevenue).reversed())
+                .collect(Collectors.toList());
     }
 
     public Long getActiveUsersCount(int lastDays) {
         return repo.fetchActiveUsersCount(lastDays);
     }
 
-    public List<ProductSeasonalityDto> getProductSeasonality(Long productId, LocalDate start, LocalDate end, String groupBy) {
+    public List<ProductSeasonalityDto> getProductSeasonality(Long productId, LocalDate start, LocalDate end, String groupBy, int limit) {
         start = normalizeStart(start);
         end = normalizeEnd(end);
 
-        List<ProductSeasonalityDto> list = repo.fetchProductSeasonality(productId, start, end, groupBy).stream().map(m -> {
+        List<ProductSeasonalityDto> list = repo.fetchProductSeasonality(productId, start, end, groupBy)
+                .stream()
+                .map(m -> {
                     ProductSeasonalityDto dto = new ProductSeasonalityDto();
                     dto.setPeriod((String) m.get("period"));
                     dto.setTotalSold(getLong(m, "total_sold"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
                     return dto;
-                }).sorted(Comparator.comparing(ProductSeasonalityDto::getPeriod))
+                })
+                .sorted(Comparator.comparing(ProductSeasonalityDto::getPeriod))
                 .collect(Collectors.toList());
 
         return limitPoints(list, 200);
     }
 
-    public List<CategorySalesDto> getCategorySales(LocalDate start, LocalDate end) {
-        return repo.fetchCategorySales(start, end).stream()
+    public List<ProductSeasonalityDto> getManagerProductSeasonality(Long managerId, Long productId, LocalDate start, LocalDate end, String groupBy, int limit) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        List<ProductSeasonalityDto> list = repo.fetchManagerProductSeasonality(managerId, productId, start, end, groupBy)
+                .stream()
+                .map(m -> {
+                    ProductSeasonalityDto dto = new ProductSeasonalityDto();
+                    dto.setPeriod((String) m.get("period"));
+                    dto.setTotalSold(getLong(m, "total_sold"));
+                    dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProductSeasonalityDto::getPeriod))
+                .collect(Collectors.toList());
+
+        return limitPoints(list, 200);
+    }
+
+    public List<CategorySalesDto> getCategorySales(LocalDate start, LocalDate end, int limit) {
+        return repo.fetchCategorySales(start, end, limit)
+                .stream()
                 .map(m -> {
                     CategorySalesDto dto = new CategorySalesDto();
                     dto.setCategory((String) m.get("category"));
@@ -145,26 +198,42 @@ public class StatisticsService {
                 .collect(Collectors.toList());
     }
 
-    public List<SalesTrendDto> getManagerSalesTrend(Long managerId, LocalDate start, LocalDate end, String groupBy) {
+    public List<CategorySalesDto> getManagerCategorySales(Long managerId, LocalDate start, LocalDate end, int limit) {
+        return repo.fetchManagerCategorySales(managerId, start, end, limit)
+                .stream()
+                .map(m -> {
+                    CategorySalesDto dto = new CategorySalesDto();
+                    dto.setCategory((String) m.get("category"));
+                    dto.setTotalSold(getLong(m, "total_sold"));
+                    dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<SalesTrendDto> getManagerSalesTrend(Long managerId, LocalDate start, LocalDate end, String groupBy, int limit) {
         start = normalizeStart(start);
         end = normalizeEnd(end);
 
-        List<SalesTrendDto> list = repo.fetchManagerSalesTrend(managerId, start, end, groupBy).stream().map(m -> {
+        List<SalesTrendDto> list = repo.fetchManagerSalesTrend(managerId, start, end, groupBy)
+                .stream()
+                .map(m -> {
                     SalesTrendDto dto = new SalesTrendDto();
                     dto.setPeriod((String) m.get("period"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
                     return dto;
-                }).sorted(Comparator.comparing(SalesTrendDto::getPeriod))
+                })
                 .collect(Collectors.toList());
 
         return limitPoints(list, 200);
     }
 
     public List<TopClientDto> getManagerTopClients(Long managerId, LocalDate start, LocalDate end, int limit) {
-        start = start != null ? start : LocalDate.of(2000, 1, 1);
-        end = end != null ? end : LocalDate.now();
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
 
-        return repo.fetchManagerTopClients(managerId, start, end, limit).stream()
+        return repo.fetchManagerTopClients(managerId, start, end, limit)
+                .stream()
                 .map(m -> {
                     TopClientDto dto = new TopClientDto();
                     dto.setClientName((String) m.get("client_name"));
@@ -176,47 +245,20 @@ public class StatisticsService {
     }
 
     public List<TopProductDto> getManagerTopProducts(Long managerId, LocalDate start, LocalDate end, int limit) {
-        start = start != null ? start : LocalDate.of(2000, 1, 1);
-        end = end != null ? end : LocalDate.now();
-
-        return repo.fetchManagerTopProducts(managerId, start, end, limit).stream()
-                .map(m -> {
-                    TopProductDto dto = new TopProductDto();
-                    dto.setProductName((String) m.get("product_name"));
-                    dto.setTotalSold(getLong(m, "total_sold"));
-                    dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
-                    dto.setProductId((Long) m.get("product_id"));
-                    return dto;
-                })
-                .sorted(Comparator.comparing(TopProductDto::getTotalRevenue).reversed())
-                .collect(Collectors.toList());
-    }
-
-    public List<ProductSeasonalityDto> getManagerProductSeasonality(Long managerId, Long productId, LocalDate start, LocalDate end, String groupBy) {
         start = normalizeStart(start);
         end = normalizeEnd(end);
 
-        List<ProductSeasonalityDto> list = repo.fetchManagerProductSeasonality(managerId, productId, start, end, groupBy).stream().map(m -> {
-                    ProductSeasonalityDto dto = new ProductSeasonalityDto();
-                    dto.setPeriod((String) m.get("period"));
-                    dto.setTotalSold(getLong(m, "total_sold"));
-                    dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
-                    return dto;
-                }).sorted(Comparator.comparing(ProductSeasonalityDto::getPeriod))
-                .collect(Collectors.toList());
-
-        return limitPoints(list, 200);
-    }
-
-    public List<CategorySalesDto> getManagerCategorySales(Long managerId, LocalDate start, LocalDate end) {
-        return repo.fetchManagerCategorySales(managerId, start, end).stream()
+        return repo.fetchManagerTopProducts(managerId, start, end, limit)
+                .stream()
                 .map(m -> {
-                    CategorySalesDto dto = new CategorySalesDto();
-                    dto.setCategory((String) m.get("category"));
+                    TopProductDto dto = new TopProductDto();
+                    dto.setProductName((String) m.get("product_name"));
+                    dto.setProductId(getLong(m, "product_id"));
                     dto.setTotalSold(getLong(m, "total_sold"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
                     return dto;
                 })
+                .sorted(Comparator.comparing(TopProductDto::getTotalRevenue).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -248,19 +290,19 @@ public class StatisticsService {
         List<T> result = new ArrayList<>();
 
         for (int i = 0; i < data.size(); i++) {
-            if ((int)(i / ratio) > (result.size() - 1)) {
+            if ((int) (i / ratio) > (result.size() - 1)) {
                 result.add(data.get(i));
             }
         }
-
         return result;
     }
 
     private LocalDate normalizeStart(LocalDate start) {
-        return start != null ? start : LocalDate.now().minusYears(5);
+        return start != null ? start : LocalDate.of(2000, 1, 1);
     }
 
     private LocalDate normalizeEnd(LocalDate end) {
         return end != null ? end : LocalDate.now();
     }
 }
+

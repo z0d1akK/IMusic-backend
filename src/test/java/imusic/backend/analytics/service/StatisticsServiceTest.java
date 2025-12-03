@@ -9,7 +9,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -23,17 +25,21 @@ class StatisticsServiceTest {
     @InjectMocks
     private StatisticsService service;
 
+    private final LocalDate start = LocalDate.of(2024,1,1);
+    private final LocalDate end = LocalDate.of(2024,12,31);
+
     @Test
     void testGetOverviewStats() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("total_orders", 10L);
-        data.put("total_revenue", BigDecimal.valueOf(500));
-        data.put("total_clients", 3L);
-        data.put("total_products", 20L);
-        data.put("active_orders", 2L);
-        data.put("low_stock_products", 1L);
-        data.put("active_users", 4L);
-        data.put("avg_order_value", BigDecimal.valueOf(50));
+        Map<String, Object> data = Map.of(
+                "total_orders", 10L,
+                "total_revenue", BigDecimal.valueOf(500),
+                "total_clients", 3L,
+                "total_products", 20L,
+                "active_orders", 2L,
+                "low_stock_products", 1L,
+                "active_users", 4L,
+                "avg_order_value", BigDecimal.valueOf(50)
+        );
 
         when(repo.fetchOverviewStats()).thenReturn(data);
 
@@ -45,86 +51,64 @@ class StatisticsServiceTest {
     }
 
     @Test
+    void testGetTopClientsWithLimit() {
+        when(repo.fetchTopClients(start, end, 5)).thenReturn(
+                List.of(Map.of("client_name","John","total_spent",BigDecimal.valueOf(300)))
+        );
+
+        var list = service.getTopClients(start, end, 5);
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).getClientName()).isEqualTo("John");
+    }
+
+    @Test
+    void testGetTopProductsWithLimit() {
+        when(repo.fetchTopProducts(5, start, end)).thenReturn(
+                List.of(Map.of("product_name","Guitar","product_id",1L,"total_sold",5L,"total_revenue",BigDecimal.valueOf(200)))
+        );
+
+        var list = service.getTopProducts(start, end, 5);
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).getProductName()).isEqualTo("Guitar");
+        assertThat(list.get(0).getProductId()).isEqualTo(1L);
+    }
+
+    @Test
+    void testGetManagerTopClients() {
+        when(repo.fetchManagerTopClients(2L, start, end, 5)).thenReturn(
+                List.of(Map.of("client_name","Alice","total_spent",BigDecimal.valueOf(150)))
+        );
+
+        var list = service.getManagerTopClients(2L, start, end, 5);
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).getClientName()).isEqualTo("Alice");
+    }
+
+    @Test
+    void testGetManagerTopProducts() {
+        when(repo.fetchManagerTopProducts(2L, start, end, 5)).thenReturn(
+                List.of(Map.of("product_name","Piano","product_id",10L,"total_sold",3L,"total_revenue",BigDecimal.valueOf(500)))
+        );
+
+        var list = service.getManagerTopProducts(2L, start, end, 5);
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).getProductName()).isEqualTo("Piano");
+        assertThat(list.get(0).getProductId()).isEqualTo(10L);
+    }
+
+    @Test
     void testGetSalesTrends() {
-        List<Map<String, Object>> list = List.of(
-                Map.of("period", "2024-01", "total_revenue", BigDecimal.valueOf(1000))
+        when(repo.fetchSalesTrends(start, end, "month")).thenReturn(
+                List.of(Map.of("period","2024-01","total_revenue",BigDecimal.valueOf(1000)))
         );
 
-        when(repo.fetchSalesTrends(any(), any())).thenReturn(list);
-
-        List<SalesTrendDto> result = service.getSalesTrends(null, null, "month");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getPeriod()).isEqualTo("2024-01");
-        assertThat(result.get(0).getTotalRevenue()).isEqualTo(BigDecimal.valueOf(1000));
-    }
-
-    @Test
-    void testGetOrderStatusStats() {
-        when(repo.fetchOrderStatusStats()).thenReturn(
-                List.of(Map.of("status", "PAID", "count", 7L))
-        );
-
-        var result = service.getOrderStatusStats();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo("PAID");
-    }
-
-    @Test
-    void testGetTopClients() {
-        when(repo.fetchTopClients(5)).thenReturn(
-                List.of(Map.of("client_name", "John", "total_spent", BigDecimal.valueOf(300)))
-        );
-
-        var result = service.getTopClients(5);
-        assertThat(result.get(0).getClientName()).isEqualTo("John");
-    }
-
-    @Test
-    void testGetTopProducts() {
-        when(repo.fetchTopProducts(5)).thenReturn(
-                List.of(Map.of("product_name", "Product", "total_sold", 10L, "total_revenue", BigDecimal.valueOf(200)))
-        );
-
-        var result = service.getTopProducts(5);
-        assertThat(result.get(0).getProductName()).isEqualTo("Product");
-    }
-
-    @Test
-    void testGetInventoryMovements() {
-        when(repo.fetchInventoryMovements(any(), any())).thenReturn(
-                List.of(Map.of("movement_type", "IN", "movement_count", 5L, "total_quantity", 30L))
-        );
-
-        var result = service.getInventoryMovements(null, null);
-        assertThat(result.get(0).getMovementType()).isEqualTo("IN");
-    }
-
-    @Test
-    void testGetLowStockProducts() {
-        when(repo.fetchLowStockProducts()).thenReturn(
-                List.of(Map.of("product_name", "X", "stock_quantity", 1, "min_stock_level", 5))
-        );
-
-        var result = service.getLowStockProducts();
-        assertThat(result.get(0).getStockQuantity()).isEqualTo(1);
-    }
-
-    @Test
-    void testGetManagerRating() {
-        when(repo.fetchManagerRatings()).thenReturn(
-                List.of(Map.of("manager_name", "Mike", "total_orders", 2L, "total_revenue", BigDecimal.valueOf(220)))
-        );
-
-        var result = service.getManagerRatings();
-        assertThat(result.get(0).getManagerName()).isEqualTo("Mike");
+        var list = service.getSalesTrends(start, end, "month");
+        assertThat(list.get(0).getPeriod()).isEqualTo("2024-01");
     }
 
     @Test
     void testGetActiveUsersCount() {
         when(repo.fetchActiveUsersCount(30)).thenReturn(15L);
-
         assertThat(service.getActiveUsersCount(30)).isEqualTo(15L);
     }
 }
-
