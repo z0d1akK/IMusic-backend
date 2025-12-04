@@ -329,4 +329,123 @@ public interface StatisticsRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDate end,
             @Param("limit") int limit
     );
+
+    @Query(value = """
+    SELECT 
+        CASE
+            WHEN :groupBy = 'day'  THEN TO_CHAR(m.created_at, 'YYYY-MM-DD')
+            WHEN :groupBy = 'year' THEN TO_CHAR(m.created_at, 'YYYY')
+            ELSE TO_CHAR(m.created_at, 'YYYY-MM')
+        END AS period,
+        
+        SUM(CASE WHEN t.code = 'INCOME'  THEN m.quantity ELSE 0 END) AS incoming,
+        SUM(CASE WHEN t.code = 'OUTCOME' THEN m.quantity ELSE 0 END) AS outgoing
+
+    FROM ops.inventory_movements m
+    JOIN ref.inventory_movement_types t ON t.id = m.movement_type_id
+    JOIN ops.products p ON p.id = m.product_id
+
+    WHERE m.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND m.created_at <= COALESCE(:endDate, NOW()::timestamp)
+      AND (:productId IS NULL OR p.id = :productId)
+      AND (:categoryId IS NULL OR p.category_id = :categoryId)
+
+    GROUP BY period
+    ORDER BY period
+    LIMIT :limit;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchInventoryMovementTrends(
+            @Param("productId") Long productId,
+            @Param("categoryId") Long categoryId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("groupBy") String groupBy,
+            @Param("limit") int limit
+    );
+
+    @Query(value = """
+    SELECT 
+        m.id AS movement_id,
+        TO_CHAR(m.created_at, 'YYYY-MM-DD') AS movement_date,
+        p.id AS product_id,
+        p.name AS product_name,
+        t.code AS movement_type,
+        m.quantity AS quantity,
+        COALESCE(m.comment, '') AS comment
+    FROM ops.inventory_movements m
+    JOIN ref.inventory_movement_types t ON t.id = m.movement_type_id
+    JOIN ops.products p ON p.id = m.product_id
+    WHERE m.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND m.created_at <= COALESCE(:endDate, NOW()::timestamp)
+      AND (:productId IS NULL OR p.id = :productId)
+      AND (:categoryId IS NULL OR p.category_id = :categoryId)
+    ORDER BY m.created_at DESC
+    LIMIT :limit;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchInventoryMovementDetails(
+            @Param("productId") Long productId,
+            @Param("categoryId") Long categoryId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("limit") int limit
+    );
+
+    @Query(value = """
+    SELECT 
+        c.id AS client_id,
+        c.company_name AS client_name,
+        ROUND(AVG(o.total_price), 2) AS avg_check
+    FROM ops.orders o
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE o.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND o.created_at <= COALESCE(:endDate, NOW()::timestamp)
+    GROUP BY c.id
+    ORDER BY avg_check DESC
+    LIMIT :limit;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchAvgChecks(
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("limit") int limit
+    );
+
+    @Query(value = """
+    SELECT 
+        c.id AS client_id,
+        c.company_name AS client_name,
+        ROUND(AVG(o.total_price), 2) AS avg_check
+    FROM ops.orders o
+    JOIN ops.clients c ON c.id = o.client_id
+    WHERE (o.created_by = :managerId OR c.created_by = :managerId)
+      AND o.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND o.created_at <= COALESCE(:endDate, NOW()::timestamp)
+    GROUP BY c.id
+    ORDER BY avg_check DESC
+    LIMIT :limit;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchManagerAvgChecks(
+            @Param("managerId") Long managerId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end,
+            @Param("limit") int limit
+    );
+
+    @Query(value = """
+    SELECT
+        o.id AS order_id,
+        TO_CHAR(o.created_at, 'YYYY-MM-DD') AS order_date,
+        o.total_price,
+        s.name AS status
+    FROM ops.orders o
+    JOIN ref.order_statuses s ON s.id = o.status_id
+    WHERE o.client_id = :clientId
+      AND o.created_at >= COALESCE(:startDate, '1900-01-01'::timestamp)
+      AND o.created_at <= COALESCE(:endDate, NOW()::timestamp)
+    ORDER BY o.created_at DESC;
+""", nativeQuery = true)
+    List<Map<String, Object>> fetchAvgCheckDetails(
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDate start,
+            @Param("endDate") LocalDate end
+    );
 }

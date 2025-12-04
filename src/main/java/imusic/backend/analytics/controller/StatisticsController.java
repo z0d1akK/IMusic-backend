@@ -175,4 +175,74 @@ public class StatisticsController {
                 statisticsService.getManagerTopProducts(managerId, startDate, endDate, limit)
         );
     }
+
+    @GetMapping("/inventory-movement-trends")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<InventoryMovementTrendDto>> getInventoryMovementTrends(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "month") String groupBy,
+            @RequestParam(defaultValue = "200") int limit
+    ) {
+        return ResponseEntity.ok(
+                statisticsService.getInventoryMovementTrends(
+                        productId, categoryId, startDate, endDate, groupBy, limit
+                )
+        );
+    }
+
+    @GetMapping("/inventory-movement-details")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<InventoryMovementDetailDto>> getInventoryMovementDetails(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "500") int limit
+    ) {
+        return ResponseEntity.ok(
+                statisticsService.getInventoryMovementDetails(
+                        productId, categoryId, startDate, endDate, limit
+                )
+        );
+    }
+
+    @GetMapping("/avg-check")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<AvgCheckDto>> getAvgChecks(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(
+                statisticsService.getAvgChecks(startDate, endDate, limit)
+        );
+    }
+
+    @GetMapping("/manager/{managerId}/avg-check")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<List<AvgCheckDto>> getManagerAvgChecks(
+            @PathVariable Long managerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(
+                statisticsService.getManagerAvgChecks(managerId, startDate, endDate, limit)
+        );
+    }
+
+    @GetMapping("/avg-check/{clientId}/details")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<AvgCheckDetailsResponse> getAvgCheckDetails(
+            @PathVariable Long clientId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(
+                statisticsService.getAvgCheckDetails(clientId, startDate, endDate)
+        );
+    }
 }

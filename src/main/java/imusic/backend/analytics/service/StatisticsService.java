@@ -2,10 +2,12 @@ package imusic.backend.analytics.service;
 
 import imusic.backend.analytics.dto.*;
 import imusic.backend.analytics.repository.StatisticsRepository;
+import imusic.backend.repository.ops.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class StatisticsService {
 
     private final StatisticsRepository repo;
+    private final ClientRepository clientRepository;
 
     public OverviewStatsDto getOverviewStats(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> map = repo.fetchOverviewStats();
@@ -261,6 +264,133 @@ public class StatisticsService {
                 .sorted(Comparator.comparing(TopProductDto::getTotalRevenue).reversed())
                 .collect(Collectors.toList());
     }
+
+    public List<InventoryMovementTrendDto> getInventoryMovementTrends(
+            Long productId,
+            Long categoryId,
+            LocalDate start,
+            LocalDate end,
+            String groupBy,
+            int limit
+    ) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        List<InventoryMovementTrendDto> list = repo.fetchInventoryMovementTrends(
+                        productId, categoryId, start, end, groupBy, limit)
+                .stream()
+                .map(m -> {
+                    InventoryMovementTrendDto dto = new InventoryMovementTrendDto();
+                    dto.setPeriod((String) m.get("period"));
+                    dto.setIncoming(getLong(m, "incoming"));
+                    dto.setOutgoing(getLong(m, "outgoing"));
+                    return dto;
+                })
+                .sorted(Comparator.comparing(InventoryMovementTrendDto::getPeriod))
+                .collect(Collectors.toList());
+
+        return limitPoints(list, 200);
+    }
+
+    public List<InventoryMovementDetailDto> getInventoryMovementDetails(
+            Long productId,
+            Long categoryId,
+            LocalDate start,
+            LocalDate end,
+            int limit
+    ) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchInventoryMovementDetails(productId, categoryId, start, end, limit)
+                .stream()
+                .map(m -> {
+                    InventoryMovementDetailDto dto = new InventoryMovementDetailDto();
+                    dto.setMovementId(getLong(m, "movement_id"));
+                    dto.setMovementDate((String) m.get("movement_date"));
+                    dto.setProductId(getLong(m, "product_id"));
+                    dto.setProductName((String) m.get("product_name"));
+                    dto.setMovementType((String) m.get("movement_type"));
+                    dto.setQuantity(getLong(m, "quantity"));
+                    dto.setComment((String) m.get("comment"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<AvgCheckDto> getAvgChecks(LocalDate start, LocalDate end, int limit) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchAvgChecks(start, end, limit)
+                .stream()
+                .map(m -> {
+                    AvgCheckDto dto = new AvgCheckDto();
+                    dto.setClientId(getLong(m, "client_id"));
+                    dto.setClientName((String) m.get("client_name"));
+                    dto.setAvgCheck(getBigDecimal(m, "avg_check"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<AvgCheckDto> getManagerAvgChecks(
+            Long managerId, LocalDate start, LocalDate end, int limit
+    ) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        return repo.fetchManagerAvgChecks(managerId, start, end, limit)
+                .stream()
+                .map(m -> {
+                    AvgCheckDto dto = new AvgCheckDto();
+                    dto.setClientId(getLong(m, "client_id"));
+                    dto.setClientName((String) m.get("client_name"));
+                    dto.setAvgCheck(getBigDecimal(m, "avg_check"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public AvgCheckDetailsResponse getAvgCheckDetails(
+            Long clientId,
+            LocalDate start,
+            LocalDate end
+    ) {
+        start = normalizeStart(start);
+        end = normalizeEnd(end);
+
+        List<AvgCheckDetailDto> orders = repo.fetchAvgCheckDetails(clientId, start, end)
+                .stream()
+                .map(m -> {
+                    AvgCheckDetailDto dto = new AvgCheckDetailDto();
+                    dto.setOrderId(getLong(m, "order_id"));
+                    dto.setOrderDate((String) m.get("order_date"));
+                    dto.setTotalPrice(getBigDecimal(m, "total_price"));
+                    dto.setStatus((String) m.get("status"));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        BigDecimal avgCheck = orders.stream()
+                .map(AvgCheckDetailDto::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(
+                        BigDecimal.valueOf(orders.isEmpty() ? 1 : orders.size()),
+                        RoundingMode.HALF_UP
+                );
+
+        String clientName = clientRepository.findCompanyNameById(clientId);
+
+        AvgCheckDetailsResponse response = new AvgCheckDetailsResponse();
+        response.setClientId(clientId);
+        response.setClientName(clientName);
+        response.setAvgCheck(avgCheck);
+        response.setOrders(orders);
+
+        return response;
+    }
+
 
     private long getLong(Map<String, Object> m, String key) {
         Object v = m.get(key);
