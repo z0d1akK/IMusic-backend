@@ -90,6 +90,7 @@ public class StatisticsService {
                     TopProductDto dto = new TopProductDto();
                     dto.setProductName((String) m.get("product_name"));
                     dto.setProductId(getLong(m, "product_id"));
+                    dto.setCategoryId(getLong(m, "category_id"));
                     dto.setTotalSold(getLong(m, "total_sold"));
                     dto.setTotalRevenue(getBigDecimal(m, "total_revenue"));
                     return dto;
