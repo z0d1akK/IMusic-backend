@@ -9,9 +9,7 @@ import java.util.List;
 public interface CategoryAttributeService {
     List<CategoryAttributeResponseDto> getAll();
     CategoryAttributeResponseDto getById(Long id);
-
     List<CategoryAttributeResponseDto> getByCategoryId(Long categoryId);
-
     CategoryAttributeResponseDto create(CategoryAttributeCreateDto dto);
     CategoryAttributeResponseDto update(Long id, CategoryAttributeUpdateDto dto);
     void delete(Long id);
