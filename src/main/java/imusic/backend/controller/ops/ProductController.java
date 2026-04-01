@@ -3,9 +3,7 @@ package imusic.backend.controller.ops;
 import imusic.backend.dto.create.ops.ProductCreateDto;
 import imusic.backend.dto.request.ops.ProductRequestDto;
 import imusic.backend.dto.response.common.PageResponseDto;
-import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
-import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
-import imusic.backend.dto.response.ops.ProductResponseDto;
+import imusic.backend.dto.response.ops.*;
 import imusic.backend.dto.update.ops.ProductUpdateDto;
 import imusic.backend.service.ops.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -74,5 +72,37 @@ public class ProductController {
     @GetMapping("/{id}/attributes-with-values")
     public ResponseEntity<List<CategoryAttributeResponseDto>> getProductAttributesWithValues(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getCategoryAttributesWithValues(id));
+    }
+
+    @PostMapping("/comparisons")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<Long> createComparison(@RequestBody List<Long> productIds) {
+        return ResponseEntity.ok(productService.createComparison(productIds));
+    }
+
+    @GetMapping("/comparisons/{id}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<ProductComparisonResponseDto> getComparison(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getComparison(id));
+    }
+
+    @GetMapping("/comparisons/user")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<List<ComparisonResponseDto>> getUserComparisons() {
+        return ResponseEntity.ok(productService.getUserComparisons());
+    }
+
+    @PostMapping("/comparisons/{id}/products/{productId}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<Void> addProduct(@PathVariable Long id, @PathVariable Long productId) {
+        productService.addProductToComparison(id, productId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/comparisons/{id}/products/{productId}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<Void> removeProduct(@PathVariable Long id, @PathVariable Long productId) {
+        productService.removeProductFromComparison(id, productId);
+        return ResponseEntity.noContent().build();
     }
 }

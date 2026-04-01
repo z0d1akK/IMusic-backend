@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 "/api/order-status-history","/api/ref/order-statuses",
                                 "/api/clients/paged","/api/users/clients/available","/api/users/paged").hasAnyRole("ADMIN","MANAGER")
 
-                        .requestMatchers("/api/clients/profile", "/api/cart/**").hasRole("CLIENT")
+                        .requestMatchers("/api/clients/profile", "/api/cart/**",
+                                "/api/products/comparisons", "/api/products/comparisons/**").hasRole("CLIENT")
 
                         .requestMatchers("/api/ref/**","/api/clients/**", "/api/products/**","/api/category-attributes/**",
                                 "/api/product-attributes/**", "/api/inventory-movements/**","/api/orders/**",

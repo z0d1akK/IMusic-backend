@@ -3,20 +3,23 @@ package imusic.backend.service.impl.ops;
 import imusic.backend.dto.create.ops.ProductAttributeCreateDto;
 import imusic.backend.dto.create.ops.ProductCreateDto;
 import imusic.backend.dto.response.common.PageResponseDto;
-import imusic.backend.dto.response.ops.CategoryAttributeResponseDto;
-import imusic.backend.dto.response.ops.ProductAttributeResponseDto;
+import imusic.backend.dto.response.ops.*;
 import imusic.backend.dto.update.ops.ProductAttributeUpdateDto;
 import imusic.backend.dto.update.ops.ProductUpdateDto;
 import imusic.backend.dto.request.ops.ProductRequestDto;
-import imusic.backend.dto.response.ops.ProductResponseDto;
+import imusic.backend.entity.ops.Comparison;
+import imusic.backend.entity.ops.ComparisonItem;
 import imusic.backend.entity.ops.Product;
+import imusic.backend.entity.ops.User;
 import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.ProductMapper;
+import imusic.backend.mapper.ops.UserMapper;
 import imusic.backend.mapper.resolver.ref.ProductCategoryResolver;
 import imusic.backend.mapper.resolver.ref.ProductUnitResolver;
-import imusic.backend.repository.ops.InventoryMovementRepository;
-import imusic.backend.repository.ops.OrderItemRepository;
-import imusic.backend.repository.ops.ProductRepository;
+import imusic.backend.mapper.resolver.ref.RoleResolver;
+import imusic.backend.mapper.resolver.ref.UserStatusResolver;
+import imusic.backend.repository.ops.*;
+import imusic.backend.service.auth.AuthService;
 import imusic.backend.service.ops.CategoryAttributeService;
 import imusic.backend.service.ops.ProductAttributeService;
 import imusic.backend.service.ops.ProductService;
@@ -32,10 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +51,12 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryAttributeService categoryAttributeService;
     private final InventoryMovementRepository inventoryMovementRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ComparisonRepository comparisonRepository;
+    private final ComparisonItemRepository comparisonItemRepository;
+    private final UserMapper userMapper;
+    private final AuthService authService;
+    private final RoleResolver roleResolver;
+    private final UserStatusResolver userStatusResolver;
 
     @Override
     @Cacheable(cacheNames = "products", key = "'all'")
@@ -137,6 +143,8 @@ public class ProductServiceImpl implements ProductService {
     public void delete(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException("Товар не найден, ID: " + id));
+        comparisonItemRepository.deleteByProductId(id);
+        productAttributeService.deleteByProductId(id);
         inventoryMovementRepository.deleteByProductId(id);
         orderItemRepository.deleteByProductId(id);
         productRepository.delete(product);
@@ -259,7 +267,95 @@ public class ProductServiceImpl implements ProductService {
         return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
     }
 
+    @Override
+    public Long createComparison(List<Long> productIds) {
 
+        Comparison comparison = new Comparison();
+
+        User currentUser = userMapper.responseToEntity(authService.getCurrentUser(),roleResolver,userStatusResolver);
+        comparison.setUser(currentUser);
+
+        comparison = comparisonRepository.save(comparison);
+
+        for (Long productId : productIds) {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new AppException("Товар не найден: " + productId));
+
+            ComparisonItem item = ComparisonItem.builder()
+                    .comparison(comparison)
+                    .product(product)
+                    .build();
+
+            comparisonItemRepository.save(item);
+        }
+
+        return comparison.getId();
+    }
+
+    @Override
+    public ProductComparisonResponseDto getComparison(Long comparisonId) {
+
+        List<ComparisonItem> items = comparisonItemRepository
+                .findAllByComparison_Id(comparisonId);
+
+        if (items.isEmpty()) {
+            throw new AppException("Сравнение пустое или не найдено");
+        }
+
+        List<Long> productIds = items.stream()
+                .map(i -> i.getProduct().getId())
+                .toList();
+
+        return buildComparison(productIds);
+    }
+
+    @Override
+    public List<ComparisonResponseDto> getUserComparisons() {
+        User currentUser = userMapper.responseToEntity(
+                authService.getCurrentUser(),
+                roleResolver,
+                userStatusResolver
+        );
+
+        List<Comparison> comparisons = comparisonRepository.findAllByUserId(currentUser.getId());
+
+        return comparisons.stream()
+                .map(comp -> {
+                    int productCount = (int) comparisonItemRepository.countByComparisonId(comp.getId());
+                    return ComparisonResponseDto.builder()
+                            .id(comp.getId())
+                            .createdAt(comp.getCreatedAt())
+                            .productCount(productCount)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void addProductToComparison(Long comparisonId, Long productId) {
+
+        if (comparisonItemRepository.existsByComparison_IdAndProduct_Id(comparisonId, productId)) {
+            return;
+        }
+
+        Comparison comparison = comparisonRepository.findById(comparisonId)
+                .orElseThrow(() -> new AppException("Сравнение не найдено"));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException("Товар не найден"));
+
+        ComparisonItem item = ComparisonItem.builder()
+                .comparison(comparison)
+                .product(product)
+                .build();
+
+        comparisonItemRepository.save(item);
+    }
+
+    @Override
+    public void removeProductFromComparison(Long comparisonId, Long productId) {
+        comparisonItemRepository.deleteByComparison_IdAndProduct_Id(comparisonId, productId);
+    }
 
     private Comparator<Product> getProductSortComparator(String sortBy, String sortDirection) {
         if (sortBy == null || sortBy.isBlank()) {
@@ -284,6 +380,50 @@ public class ProductServiceImpl implements ProductService {
             comparator = comparator.reversed();
         }
         return comparator;
+    }
+
+    private ProductComparisonResponseDto buildComparison(List<Long> productIds) {
+
+        List<ProductResponseDto> products = productIds.stream()
+                .map(this::getById)
+                .toList();
+
+        Map<Long, List<ProductAttributeResponseDto>> productAttributesMap =
+                productIds.stream()
+                        .collect(Collectors.toMap(
+                                id -> id,
+                                this::getAttributesByProductId
+                        ));
+
+        Set<String> attributeNames = productAttributesMap.values().stream()
+                .flatMap(List::stream)
+                .map(ProductAttributeResponseDto::getCategoryAttributeName)
+                .collect(Collectors.toSet());
+
+        List<ComparisonAttributeDto> comparisonAttributes = attributeNames.stream()
+                .map(attrName -> {
+                    Map<Long, String> values = new HashMap<>();
+
+                    for (Long productId : productIds) {
+                        String value = productAttributesMap.get(productId).stream()
+                                .filter(a -> attrName.equals(a.getCategoryAttributeName()))
+                                .map(ProductAttributeResponseDto::getValue)
+                                .findFirst()
+                                .orElse("-");
+                        values.put(productId, value);
+                    }
+
+                    return ComparisonAttributeDto.builder()
+                            .attributeName(attrName)
+                            .values(values)
+                            .build();
+                })
+                .toList();
+
+        return ProductComparisonResponseDto.builder()
+                .products(products)
+                .attributes(comparisonAttributes)
+                .build();
     }
 
 }

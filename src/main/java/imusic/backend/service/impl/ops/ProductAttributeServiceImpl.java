@@ -84,6 +84,11 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     }
 
     @Override
+    public void deleteByProductId(Long productId) {
+        attributeRepository.deleteByProductId(productId);
+    }
+
+    @Override
     public PageResponseDto<ProductAttributeResponseDto> getPagedAttributes(ProductAttributeRequestDto request) {
         List<ProductAttribute> attributes = attributeRepository.findAll();
 

@@ -15,6 +15,9 @@ public interface ProductAttributeService {
     ProductAttributeResponseDto create(ProductAttributeCreateDto dto);
     ProductAttributeResponseDto update(Long id, ProductAttributeUpdateDto dto);
     void delete(Long id);
+
+    void deleteByProductId(Long productId);
+
     PageResponseDto<ProductAttributeResponseDto> getPagedAttributes(ProductAttributeRequestDto request);
     List<ProductAttributeResponseDto> getByProductId(Long productId);
     ProductAttributeResponseDto updateOrCreate(ProductAttributeUpdateDto dto);
