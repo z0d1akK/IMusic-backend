@@ -22,9 +22,9 @@ public interface ProductService {
 
     Long createComparison(List<Long> productIds);
     ProductComparisonResponseDto getComparison(Long comparisonId);
-
     List<ComparisonResponseDto> getUserComparisons();
-
     void addProductToComparison(Long comparisonId, Long productId);
     void removeProductFromComparison(Long comparisonId, Long productId);
+
+    List<PriceHistoryPointDto> getPriceHistory(Long productId, int months);
 }

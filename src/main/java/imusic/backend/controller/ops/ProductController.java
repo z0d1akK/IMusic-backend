@@ -105,4 +105,12 @@ public class ProductController {
         productService.removeProductFromComparison(id, productId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/price-history")
+    public ResponseEntity<List<PriceHistoryPointDto>> getPriceHistory(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "2") int months
+    ) {
+        return ResponseEntity.ok(productService.getPriceHistory(id, months));
+    }
 }

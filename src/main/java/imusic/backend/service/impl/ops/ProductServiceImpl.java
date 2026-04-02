@@ -7,10 +7,7 @@ import imusic.backend.dto.response.ops.*;
 import imusic.backend.dto.update.ops.ProductAttributeUpdateDto;
 import imusic.backend.dto.update.ops.ProductUpdateDto;
 import imusic.backend.dto.request.ops.ProductRequestDto;
-import imusic.backend.entity.ops.Comparison;
-import imusic.backend.entity.ops.ComparisonItem;
-import imusic.backend.entity.ops.Product;
-import imusic.backend.entity.ops.User;
+import imusic.backend.entity.ops.*;
 import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.ProductMapper;
 import imusic.backend.mapper.ops.UserMapper;
@@ -44,6 +41,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
     private final ProductMapper productMapper;
     private final ProductCategoryResolver categoryResolver;
     private final ProductUnitResolver unitResolver;
@@ -118,9 +116,21 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException("Товар не найден, ID: " + id));
 
+        Float oldPrice = product.getPrice();
+
         product.setUpdatedAt(LocalDateTime.now());
         productMapper.updateEntity(dto, categoryResolver, unitResolver, product);
         product = productRepository.save(product);
+
+        if (dto.getPrice() != null && !dto.getPrice().equals(oldPrice)) {
+            priceHistoryRepository.save(
+                    PriceHistory.builder()
+                            .productId(product.getId())
+                            .price(product.getPrice())
+                            .changedAt(LocalDateTime.now())
+                            .build()
+            );
+        }
 
         if (dto.getAttributes() != null) {
             for (ProductAttributeResponseDto attrDto : dto.getAttributes()) {
@@ -355,6 +365,42 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void removeProductFromComparison(Long comparisonId, Long productId) {
         comparisonItemRepository.deleteByComparison_IdAndProduct_Id(comparisonId, productId);
+    }
+
+    @Override
+    public List<PriceHistoryPointDto> getPriceHistory(Long productId, int months) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime from = now.minusMonths(months);
+
+        List<Object[]> rawData;
+
+        if (months <= 2) {
+            rawData = priceHistoryRepository.getDailyPriceHistory(productId, from, now);
+        } else {
+            rawData = priceHistoryRepository.getMonthlyPriceHistory(productId, from, now);
+        }
+
+        List<PriceHistoryPointDto> result = rawData.stream()
+                .map(row -> PriceHistoryPointDto.builder()
+                        .label(row[0].toString())
+                        .price(((Number) row[1]).floatValue())
+                        .build())
+                .toList();
+
+        if (result.isEmpty()) {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new AppException("Товар не найден"));
+
+            return List.of(
+                    PriceHistoryPointDto.builder()
+                            .label("now")
+                            .price(product.getPrice())
+                            .build()
+            );
+        }
+
+        return result;
     }
 
     private Comparator<Product> getProductSortComparator(String sortBy, String sortDirection) {
