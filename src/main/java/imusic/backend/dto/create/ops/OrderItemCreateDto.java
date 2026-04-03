@@ -21,4 +21,8 @@ public class OrderItemCreateDto {
     private Integer quantity;
     @NotNull
     private BigDecimal unitPrice;
+
+    private String productName;
+    private String productImagePath;
+    private Integer productStockQuantity;
 }

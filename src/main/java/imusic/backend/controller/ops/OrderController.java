@@ -65,4 +65,10 @@ public class OrderController {
         orderService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/repeat")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CLIENT')")
+    public ResponseEntity<OrderCreateDto> getRepeatOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.getRepeatOrderData(id));
+    }
 }

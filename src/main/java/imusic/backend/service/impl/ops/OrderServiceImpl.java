@@ -1,6 +1,7 @@
 package imusic.backend.service.impl.ops;
 
 import imusic.backend.dto.create.ops.OrderCreateDto;
+import imusic.backend.dto.create.ops.OrderItemCreateDto;
 import imusic.backend.dto.request.ops.OrderRequestDto;
 import imusic.backend.dto.response.common.PageResponseDto;
 import imusic.backend.dto.response.ops.OrderResponseDto;
@@ -99,6 +100,17 @@ public class OrderServiceImpl implements OrderService {
                 .map(itemDto -> orderItemMapper.toEntity(itemDto, orderResolver, productResolver))
                 .peek(item -> item.setOrder(order))
                 .collect(Collectors.toList());
+
+        for (OrderItem item : items) {
+            int available = item.getProduct().getStockQuantity();
+
+            if (available < item.getQuantity()) {
+                throw new AppException(
+                        "Недостаточно товара: " + item.getProduct().getName() +
+                                " (доступно: " + available + ", нужно: " + item.getQuantity() + ")"
+                );
+            }
+        }
 
         order.setItems(items);
 
@@ -245,6 +257,62 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
 
         return new PageResponseDto<>(content, request.getPage(), request.getSize(), totalElements, totalPages);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderCreateDto getRepeatOrderData(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException("Заказ не найден, ID: " + orderId));
+
+        User currentUser = userMapper.responseToEntity(authService.getCurrentUser(),roleResolver,userStatusResolver);
+        User systemUser = userRepository.findByUsername("system")
+                .orElseThrow(() -> new EntityNotFoundException("Системный пользователь не найден"));
+        if (currentUser.getRole().getCode().equals("ADMIN") || currentUser.getRole().getCode().equals("MANAGER")) {
+            order.setCreatedBy(currentUser);
+        } else {
+            order.setCreatedBy(systemUser);
+        }
+
+        OrderCreateDto dto = new OrderCreateDto();
+
+        dto.setClientId(order.getClient().getId());
+        dto.setCreatedBy(currentUser.getId());
+        dto.setStatusId(1L);
+
+        dto.setDeliveryAddress(order.getDeliveryAddress());
+        dto.setDeliveryDate(order.getDeliveryDate());
+        dto.setComment(order.getComment());
+
+        List<OrderItemCreateDto> items = order.getItems().stream()
+                .map(item -> {
+                    if (item.getProduct() == null) {
+                        throw new AppException("Товар в заказе не найден (ID позиции: " + item.getId() + ")");
+                    }
+
+                    if (item.getProduct().getPrice() == null) {
+                        throw new AppException("У товара отсутствует цена: " + item.getProduct().getName());
+                    }
+
+                    return OrderItemCreateDto.builder()
+                            .productId(item.getProduct().getId())
+                            .orderId(null)
+                            .quantity(item.getQuantity())
+                            .unitPrice(BigDecimal.valueOf(item.getProduct().getPrice()))
+                            .productName(item.getProduct().getName())
+                            .productImagePath(item.getProduct().getImagePath())
+                            .productStockQuantity(item.getProduct().getStockQuantity())
+                            .build();
+                })
+                .toList();
+
+        if (items.isEmpty()) {
+            throw new AppException("Невозможно повторить заказ без товаров");
+        }
+
+        dto.setItems(items);
+
+        return dto;
     }
 
 

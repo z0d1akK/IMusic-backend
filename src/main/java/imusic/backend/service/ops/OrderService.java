@@ -16,4 +16,5 @@ public interface OrderService {
     List<OrderResponseDto> getOrdersByClientId(Long clientId);
     List<OrderResponseDto> getAll();
     PageResponseDto<OrderResponseDto> getPagedOrders(OrderRequestDto request);
+    OrderCreateDto getRepeatOrderData(Long orderId);
 }
