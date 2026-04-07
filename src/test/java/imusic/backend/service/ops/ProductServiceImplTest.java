@@ -1,13 +1,23 @@
 package imusic.backend.service.ops;
 
 import imusic.backend.dto.create.ops.ProductCreateDto;
+import imusic.backend.dto.response.ops.ComparisonResponseDto;
+import imusic.backend.dto.response.ops.PriceHistoryPointDto;
+import imusic.backend.dto.response.ops.ProductComparisonResponseDto;
 import imusic.backend.dto.response.ops.ProductResponseDto;
+import imusic.backend.entity.ops.Comparison;
 import imusic.backend.entity.ops.Product;
+import imusic.backend.entity.ops.User;
+import imusic.backend.entity.ops.ComparisonItem;
 import imusic.backend.entity.ref.ProductCategory;
 import imusic.backend.entity.ref.ProductUnit;
 import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.ProductMapper;
-import imusic.backend.repository.ops.ProductRepository;
+import imusic.backend.mapper.ops.UserMapper;
+import imusic.backend.mapper.resolver.ref.RoleResolver;
+import imusic.backend.mapper.resolver.ref.UserStatusResolver;
+import imusic.backend.repository.ops.*;
+import imusic.backend.service.auth.AuthService;
 import imusic.backend.service.impl.ops.ProductServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +45,16 @@ class ProductServiceImplTest {
 
     @Mock
     private ProductAttributeService productCategoryService;
+
+    @Mock private PriceHistoryRepository priceHistoryRepository;
+    @Mock private ComparisonRepository comparisonRepository;
+    @Mock private ComparisonItemRepository comparisonItemRepository;
+    @Mock private InventoryMovementRepository inventoryMovementRepository;
+    @Mock private OrderItemRepository orderItemRepository;
+    @Mock private UserMapper userMapper;
+    @Mock private AuthService authService;
+    @Mock private RoleResolver roleResolver;
+    @Mock private UserStatusResolver userStatusResolver;
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -90,7 +110,7 @@ class ProductServiceImplTest {
         List<ProductResponseDto> result = productService.getAll();
 
         assertEquals(1, result.size());
-        assertEquals("Smartphone", result.get(0).getName());
+        assertEquals("Smartphone", result.getFirst().getName());
         verify(productRepository, times(1)).findAll();
     }
 
@@ -176,5 +196,194 @@ class ProductServiceImplTest {
 
         assertEquals("Headphones", result.getName());
         verify(productRepository).save(productEntity);
+    }
+
+    @Test
+    void testCreateComparisonSuccess() {
+
+        User user = new User();
+        user.setId(1L);
+
+        Product product = new Product();
+        product.setId(10L);
+
+        Comparison comparison = new Comparison();
+        comparison.setId(100L);
+
+        when(authService.getCurrentUser()).thenReturn(null);
+        when(userMapper.responseToEntity(any(), any(), any())).thenReturn(user);
+        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(comparisonRepository.save(any())).thenReturn(comparison);
+
+        Long result = productService.createComparison(List.of(10L));
+
+        assertEquals(100L, result);
+        verify(comparisonItemRepository).save(any());
+    }
+
+    @Test
+    void testCreateComparisonProductNotFound() {
+
+        when(authService.getCurrentUser()).thenReturn(null);
+        when(userMapper.responseToEntity(any(), any(), any())).thenReturn(new User());
+        when(productRepository.findById(10L)).thenReturn(Optional.empty());
+
+        assertThrows(AppException.class,
+                () -> productService.createComparison(List.of(10L)));
+    }
+
+    @Test
+    void testGetComparisonSuccess() {
+
+        Product product = new Product();
+        product.setId(1L);
+
+        ComparisonItem item = new ComparisonItem();
+        item.setProduct(product);
+
+        when(comparisonItemRepository.findAllByComparison_Id(1L))
+                .thenReturn(List.of(item));
+
+        when(productRepository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        when(productMapper.toResponse(any()))
+                .thenReturn(new ProductResponseDto());
+
+        when(productCategoryService.getAll())
+                .thenReturn(List.of());
+
+        ProductComparisonResponseDto result = productService.getComparison(1L);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetComparisonEmpty() {
+        when(comparisonItemRepository.findAllByComparison_Id(1L))
+                .thenReturn(List.of());
+
+        assertThrows(AppException.class,
+                () -> productService.getComparison(1L));
+    }
+
+    @Test
+    void testAddProductToComparisonSuccess() {
+
+        Comparison comparison = new Comparison();
+        Product product = new Product();
+
+        when(comparisonItemRepository.existsByComparison_IdAndProduct_Id(1L, 2L))
+                .thenReturn(false);
+
+        when(comparisonRepository.findById(1L))
+                .thenReturn(Optional.of(comparison));
+
+        when(productRepository.findById(2L))
+                .thenReturn(Optional.of(product));
+
+        productService.addProductToComparison(1L, 2L);
+
+        verify(comparisonItemRepository).save(any());
+    }
+
+    @Test
+    void testAddProductToComparisonDuplicate() {
+
+        when(comparisonItemRepository.existsByComparison_IdAndProduct_Id(1L, 2L))
+                .thenReturn(true);
+
+        productService.addProductToComparison(1L, 2L);
+
+        verify(comparisonItemRepository, never()).save(any());
+    }
+
+    @Test
+    void testRemoveProductFromComparison() {
+
+        productService.removeProductFromComparison(1L, 2L);
+
+        verify(comparisonItemRepository)
+                .deleteByComparison_IdAndProduct_Id(1L, 2L);
+    }
+
+    @Test
+    void testGetUserComparisons() {
+
+        User user = new User();
+        user.setId(1L);
+
+        Comparison comp = new Comparison();
+        comp.setId(10L);
+        comp.setCreatedAt(LocalDateTime.now());
+
+        when(authService.getCurrentUser()).thenReturn(null);
+        when(userMapper.responseToEntity(any(), any(), any())).thenReturn(user);
+
+        when(comparisonRepository.findAllByUserId(1L))
+                .thenReturn(List.of(comp));
+
+        when(comparisonItemRepository.countByComparisonId(10L))
+                .thenReturn(2L);
+
+        List<ComparisonResponseDto> result = productService.getUserComparisons();
+
+        assertEquals(1, result.size());
+        assertEquals(2, result.getFirst().getProductCount());
+    }
+
+    @Test
+    void testGetPriceHistoryDaily() {
+
+        when(priceHistoryRepository.getDailyPriceHistory(eq(1L), any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[]{"2024-01-01", 100}));
+
+        List<PriceHistoryPointDto> result = productService.getPriceHistory(1L, 2);
+
+        assertEquals(1, result.size());
+        assertEquals(100f, result.getFirst().getPrice());
+    }
+
+    @Test
+    void testGetPriceHistoryMonthly() {
+
+        when(priceHistoryRepository.getMonthlyPriceHistory(eq(1L), any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[]{"Jan", 150}));
+
+        List<PriceHistoryPointDto> result = productService.getPriceHistory(1L, 6);
+
+        assertEquals(1, result.size());
+        assertEquals(150f, result.getFirst().getPrice());
+    }
+    @Test
+    void testGetPriceHistoryFallbackToCurrentPrice() {
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setPrice(200f);
+
+        when(priceHistoryRepository.getDailyPriceHistory(eq(1L), any(), any()))
+                .thenReturn(List.of());
+
+        when(productRepository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        List<PriceHistoryPointDto> result = productService.getPriceHistory(1L, 2);
+
+        assertEquals(1, result.size());
+        assertEquals(200f, result.getFirst().getPrice());
+    }
+
+    @Test
+    void testGetPriceHistoryProductNotFound() {
+
+        when(priceHistoryRepository.getDailyPriceHistory(eq(1L), any(), any()))
+                .thenReturn(List.of());
+
+        when(productRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AppException.class,
+                () -> productService.getPriceHistory(1L, 2));
     }
 }

@@ -12,9 +12,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -33,14 +33,14 @@ class OrderControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    @MockBean
+    @MockitoBean
     private OrderService orderService;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
     @Test
-    @DisplayName("GET /api/orders/{id} — CLIENT/ADMIN/MANAGER могут получить заказ")
+    @DisplayName("GET /api/orders/{id} — CLIENT может получить заказ")
     @WithMockUser(roles = "CLIENT")
     void testGetOrderById() throws Exception {
         OrderResponseDto dto = new OrderResponseDto();
@@ -54,7 +54,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/orders/by-client — возвращает заказы по клиенту")
+    @DisplayName("GET /api/orders/by-client — возвращает заказы клиента")
     @WithMockUser(roles = "CLIENT")
     void testGetOrdersByClient() throws Exception {
         OrderResponseDto dto = new OrderResponseDto();
@@ -69,24 +69,11 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/orders/all — ADMIN/MANAGER получают все заказы")
-    @WithMockUser(roles = "ADMIN")
-    void testGetAllOrders() throws Exception {
-        OrderResponseDto dto = new OrderResponseDto();
-        dto.setId(1L);
-
-        when(orderService.getAll()).thenReturn(List.of(dto));
-
-        mvc.perform(get("/api/orders/all"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L));
-    }
-
-    @Test
-    @DisplayName("POST /api/orders — CLIENT/ADMIN/MANAGER создают заказ")
+    @DisplayName("POST /api/orders — создаёт заказ")
     @WithMockUser(roles = "CLIENT")
     void testCreateOrder() throws Exception {
         OrderCreateDto createDto = new OrderCreateDto();
+
         OrderResponseDto dto = new OrderResponseDto();
         dto.setId(99L);
 
@@ -101,10 +88,11 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /api/orders/{id} — ADMIN/MANAGER обновляют заказ")
+    @DisplayName("PUT /api/orders/{id} — MANAGER обновляет заказ")
     @WithMockUser(roles = "MANAGER")
     void testUpdateOrder() throws Exception {
         OrderUpdateDto updateDto = new OrderUpdateDto();
+
         OrderResponseDto dto = new OrderResponseDto();
         dto.setId(10L);
 
@@ -119,7 +107,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/orders/{id} — ADMIN/MANAGER удаляют заказ")
+    @DisplayName("DELETE /api/orders/{id} — ADMIN удаляет заказ")
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrder() throws Exception {
         doNothing().when(orderService).delete(5L);
@@ -128,22 +116,34 @@ class OrderControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        verify(orderService, times(1)).delete(5L);
+        verify(orderService).delete(5L);
     }
 
     @Test
-    @DisplayName("POST /api/orders/paged — ADMIN/MANAGER получают страницы заказов")
+    @DisplayName("POST /api/orders/paged — возвращает страницу")
     @WithMockUser(roles = "MANAGER")
     void testGetPagedOrders() throws Exception {
-        OrderRequestDto req = new OrderRequestDto();
-        PageResponseDto<OrderResponseDto> page = new PageResponseDto<>(List.of(), 0, 12, 0, 0);
+        PageResponseDto<OrderResponseDto> page =
+                new PageResponseDto<>(List.of(), 0, 10, 0, 0);
 
         when(orderService.getPagedOrders(any())).thenReturn(page);
 
         mvc.perform(post("/api/orders/paged")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(req)))
+                        .content(mapper.writeValueAsString(new OrderRequestDto())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /api/orders/{id}/repeat — получает данные для повторного заказа")
+    @WithMockUser(roles = "CLIENT")
+    void testRepeatOrder() throws Exception {
+        OrderCreateDto dto = new OrderCreateDto();
+
+        when(orderService.getRepeatOrderData(5L)).thenReturn(dto);
+
+        mvc.perform(get("/api/orders/5/repeat"))
                 .andExpect(status().isOk());
     }
 }

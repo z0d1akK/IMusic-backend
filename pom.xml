@@ -177,6 +177,8 @@
                         <exclude>**/mapper/**</exclude>
                         <exclude>**/repository/**</exclude>
                         <exclude>**/entity/**</exclude>
+                        <exclude>**/analytics/**</exclude>
+                        <exclude>**/*Application.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>

@@ -1,9 +1,11 @@
 package imusic.backend.service.ops;
 
+import imusic.backend.dto.create.ops.OrderCreateDto;
 import imusic.backend.dto.response.ops.OrderResponseDto;
 import imusic.backend.dto.update.ops.OrderUpdateDto;
 import imusic.backend.entity.ops.*;
 import imusic.backend.entity.ref.OrderStatus;
+import imusic.backend.entity.ref.Role;
 import imusic.backend.exception.AppException;
 import imusic.backend.mapper.ops.OrderItemMapper;
 import imusic.backend.mapper.ops.OrderMapper;
@@ -18,6 +20,7 @@ import imusic.backend.repository.ref.OrderStatusRepository;
 import imusic.backend.service.auth.AuthService;
 import imusic.backend.service.impl.ops.OrderServiceImpl;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -96,7 +99,7 @@ class OrderServiceImplTest {
         List<OrderResponseDto> result = service.getAll();
 
         assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getId());
+        assertEquals(1L, result.getFirst().getId());
     }
 
     @Test
@@ -157,4 +160,64 @@ class OrderServiceImplTest {
         verify(orderStatusHistoryService, times(1))
                 .addStatusHistory(1L, 1L, 2L, 10L);
     }
+
+    @Test
+    @DisplayName("getRepeatOrderData — успешно формирует DTO")
+    void testGetRepeatOrderDataSuccess() {
+
+        Order order = new Order();
+        order.setId(1L);
+
+        Client client = new Client();
+        client.setId(2L);
+        order.setClient(client);
+
+        Product product = new Product();
+        product.setId(10L);
+        product.setPrice(100.0f);
+        product.setName("Test");
+
+        OrderItem item = new OrderItem();
+        item.setId(1L);
+        item.setProduct(product);
+        item.setQuantity(2);
+
+        order.setItems(List.of(item));
+
+        Role role = new Role();
+        role.setCode("CLIENT");
+
+        User user = new User();
+        user.setId(99L);
+        user.setRole(role);
+
+        User systemUser = new User();
+        systemUser.setId(1L);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(authService.getCurrentUser()).thenReturn(null);
+
+        when(userMapper.responseToEntity(any(), any(), any()))
+                .thenReturn(user);
+
+        when(userRepository.findByUsername("system"))
+                .thenReturn(Optional.of(systemUser));
+
+        OrderCreateDto dto = service.getRepeatOrderData(1L);
+
+        assertNotNull(dto);
+        assertEquals(1, dto.getItems().size());
+    }
+
+    @Test
+    @DisplayName("getRepeatOrderData — ошибка если нет товаров")
+    void testRepeatOrderEmptyItems() {
+        Order order = new Order();
+        order.setItems(List.of());
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThrows(EntityNotFoundException.class, () -> service.getRepeatOrderData(1L));
+    }
+
 }
