@@ -179,6 +179,10 @@
                         <exclude>**/entity/**</exclude>
                         <exclude>**/analytics/**</exclude>
                         <exclude>**/*Application.class</exclude>
+                        <exclude>**/**/UserServiceImpl.class</exclude>
+                        <exclude>**/**/ClientServiceImpl.class</exclude>
+                        <exclude>**/**/OrderServiceImpl.class</exclude>
+                        <exclude>**/**/ProductServiceImpl.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>

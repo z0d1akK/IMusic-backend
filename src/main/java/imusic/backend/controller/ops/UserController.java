@@ -101,7 +101,7 @@ public class UserController {
 
     @PostMapping("/{id}/avatar")
     public ResponseEntity<Void> uploadAvatar(@PathVariable Long id,
-                                             @RequestParam("file") MultipartFile file) {
+                                             @RequestParam("avatar") MultipartFile file) {
         userService.uploadAvatar(id, file);
         return ResponseEntity.ok().build();
     }

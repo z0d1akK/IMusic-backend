@@ -215,6 +215,13 @@ public class ProductServiceImpl implements ProductService {
     public PageResponseDto<ProductResponseDto> getPagedProducts(ProductRequestDto request) {
         List<Product> products = productRepository.findAll();
 
+        if (request.getSearch() != null && !request.getSearch().isBlank()) {
+            String searchValue = request.getSearch().toLowerCase().trim();
+            products = products.stream()
+                    .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(searchValue))
+                    .collect(Collectors.toList());
+        }
+
         if (request.getFilters() != null && !request.getFilters().isEmpty()) {
             for (String filter : request.getFilters()) {
                 if (filter.startsWith("name:")) {

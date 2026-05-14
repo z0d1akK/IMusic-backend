@@ -217,10 +217,17 @@ public class UserServiceImpl implements UserService {
         }
 
         try {
-            String imageName = "user_" + id + "_" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path imagePath = Paths.get("uploads/avatars", imageName);
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String imageName = "user_" + id + "_" + UUID.randomUUID() + extension;
+
+            Path imagePath = Paths.get("D:/JProjects/IMusic/backend/src/main/resources/uploads/avatars", imageName);
             Files.createDirectories(imagePath.getParent());
-            file.transferTo(imagePath);
+            file.transferTo(imagePath.toFile());
+
             user.setAvatarPath("/avatars/" + imageName);
             userRepository.save(user);
         } catch (Exception e) {
