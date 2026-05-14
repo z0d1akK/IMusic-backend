@@ -15,6 +15,7 @@ import imusic.backend.mapper.resolver.ref.ProductCategoryResolver;
 import imusic.backend.mapper.resolver.ref.ProductUnitResolver;
 import imusic.backend.mapper.resolver.ref.RoleResolver;
 import imusic.backend.mapper.resolver.ref.UserStatusResolver;
+import imusic.backend.config.AppUploadsProperties;
 import imusic.backend.repository.ops.*;
 import imusic.backend.service.auth.AuthService;
 import imusic.backend.service.ops.CategoryAttributeService;
@@ -30,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
     private final AuthService authService;
     private final RoleResolver roleResolver;
     private final UserStatusResolver userStatusResolver;
+    private final AppUploadsProperties uploadsProperties;
 
     @Override
     @Cacheable(cacheNames = "products", key = "'all'")
@@ -172,7 +173,7 @@ public class ProductServiceImpl implements ProductService {
 
         try {
             String imageName = "product_" + id + "_" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path imagePath = Paths.get("D:/JProjects/IMusic/backend/src/main/resources/uploads/products", imageName);
+            Path imagePath = uploadsProperties.basePath().resolve("products").resolve(imageName);
             Files.createDirectories(imagePath.getParent());
             file.transferTo(imagePath);
             product.setImagePath("/products/" + imageName);

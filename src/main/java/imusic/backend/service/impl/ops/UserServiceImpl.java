@@ -1,5 +1,6 @@
 package imusic.backend.service.impl.ops;
 
+import imusic.backend.config.AppUploadsProperties;
 import imusic.backend.dto.auth.ChangeLoginRequest;
 import imusic.backend.dto.auth.ChangePasswordRequest;
 import imusic.backend.dto.request.ops.UserRequestDto;
@@ -28,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +45,7 @@ public class UserServiceImpl implements UserService {
     private final UserStatusResolver userStatusResolver;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final AppUploadsProperties uploadsProperties;
 
     @Override
     @Cacheable(cacheNames = "users", key = "'all'")
@@ -224,7 +225,7 @@ public class UserServiceImpl implements UserService {
             }
             String imageName = "user_" + id + "_" + UUID.randomUUID() + extension;
 
-            Path imagePath = Paths.get("D:/JProjects/IMusic/backend/src/main/resources/uploads/avatars", imageName);
+            Path imagePath = uploadsProperties.basePath().resolve("avatars").resolve(imageName);
             Files.createDirectories(imagePath.getParent());
             file.transferTo(imagePath.toFile());
 
